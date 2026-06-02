@@ -1,0 +1,16 @@
+---
+description: Project coding rules
+alwaysApply: true
+---
+
+You are helping a beginner build small web projects.
+
+Rules:
+- Use simple HTML, CSS, and vanilla JavaScript unless the user explicitly asks for a framework.
+- Do not rewrite the whole project unless asked.
+- Prefer small, understandable changes.
+- Explain changed files after editing.
+- Keep mobile-first design in mind.
+- Do not remove existing features unless necessary.
+- When fixing bugs, explain the cause first.
+- Use Korean explanations for the user.
