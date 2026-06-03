@@ -10,12 +10,75 @@
     <main class="page">
       <a class="back-link" href="./index.html">← 메인으로 돌아가기</a>
 
-      <section class="content-card">
+      <section class="content-card board-page">
         <h1>자유게시판</h1>
-        <p class="desc">백엔드 연결 후 오픈 예정입니다.</p>
+        <p class="desc">전남드래곤즈 팬들의 자유 게시판입니다.</p>
+
+        <form id="board-form" class="board-form" novalidate>
+          <div class="board-field">
+            <label class="board-label" for="board-title">제목</label>
+            <input
+              id="board-title"
+              class="board-input"
+              type="text"
+              name="title"
+              maxlength="80"
+              autocomplete="off"
+              placeholder="제목을 입력하세요"
+            />
+          </div>
+
+          <div class="board-field">
+            <label class="board-label" for="board-author">작성자</label>
+            <input
+              id="board-author"
+              class="board-input"
+              type="text"
+              name="author"
+              maxlength="30"
+              autocomplete="nickname"
+              placeholder="닉네임"
+            />
+          </div>
+
+          <div class="board-field">
+            <label class="board-label" for="board-content">내용</label>
+            <textarea
+              id="board-content"
+              class="board-textarea"
+              name="content"
+              rows="5"
+              maxlength="2000"
+              placeholder="내용을 입력하세요"
+            ></textarea>
+          </div>
+
+          <p
+            id="board-form-status"
+            class="board-status is-hidden"
+            role="status"
+            aria-live="polite"
+          ></p>
+
+          <button type="submit" class="btn board-submit-btn">등록</button>
+        </form>
+
+        <h2 class="section-subtitle">게시글 목록</h2>
+        <p
+          id="board-list-status"
+          class="board-status is-loading"
+          role="status"
+          aria-live="polite"
+        >
+          게시글을 불러오는 중...
+        </p>
+        <div id="board-posts-list" class="board-posts-list"></div>
       </section>
     </main>
 
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
     <script src="./script.js"></script>
   </body>
 </html>

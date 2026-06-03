@@ -669,3 +669,402 @@ function initGalleryPage() {
 if (isGalleryPage()) {
   initGalleryPage();
 }
+
+// --- board.html 전용: Firestore 자유게시판 ---
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCLVU8ZDaGSdmOTqqANqYH9_O4PCbgnoFY",
+  authDomain: "jeonnam-fan.firebaseapp.com",
+  projectId: "jeonnam-fan",
+  storageBucket: "jeonnam-fan.firebasestorage.app",
+  messagingSenderId: "979341015240",
+  appId: "1:979341015240:web:480102edee3952462f0dfd",
+};
+
+const BOARD_POSTS_COLLECTION = "posts";
+const BOARD_POSTS_LIMIT = 20;
+const BOARD_LOADING_MESSAGE = "게시글을 불러오는 중...";
+const BOARD_LOAD_ERROR_MESSAGE =
+  "게시글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
+const BOARD_EMPTY_MESSAGE = "아직 등록된 글이 없습니다.";
+const BOARD_SAVING_MESSAGE = "게시글을 등록하는 중...";
+const BOARD_SAVE_SUCCESS_MESSAGE = "등록되었습니다.";
+const BOARD_SAVE_ERROR_MESSAGE =
+  "등록에 실패했습니다. 잠시 후 다시 시도해주세요.";
+const BOARD_VALIDATION_MESSAGE = "제목, 작성자, 내용을 모두 입력해주세요.";
+const BOARD_AUTH_ERROR_MESSAGE =
+  "접속 준비에 실패했습니다. 새로고침 후 다시 시도해주세요.";
+const BOARD_UPDATING_MESSAGE = "수정하는 중...";
+const BOARD_UPDATE_SUCCESS_MESSAGE = "수정되었습니다.";
+const BOARD_UPDATE_ERROR_MESSAGE =
+  "수정에 실패했습니다. 잠시 후 다시 시도해주세요.";
+const BOARD_DELETING_MESSAGE = "삭제하는 중...";
+const BOARD_DELETE_SUCCESS_MESSAGE = "삭제되었습니다.";
+const BOARD_DELETE_ERROR_MESSAGE =
+  "삭제에 실패했습니다. 잠시 후 다시 시도해주세요.";
+const BOARD_EDIT_VALIDATION_MESSAGE = "제목과 내용을 모두 입력해주세요.";
+
+function isBoardPage() {
+  return document.getElementById("board-form") !== null;
+}
+
+function setBoardStatus(statusEl, state, message) {
+  if (!statusEl) {
+    return;
+  }
+
+  statusEl.textContent = message || "";
+  statusEl.className = `board-status is-${state}`;
+}
+
+function formatBoardDate(value) {
+  if (!value) {
+    return "-";
+  }
+
+  const date =
+    typeof value.toDate === "function" ? value.toDate() : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date.toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function createBoardPostCard(postId, post, currentUid) {
+  const isOwner = Boolean(post.uid && post.uid === currentUid);
+  const ownerButtons = isOwner
+    ? `
+      <div class="board-post-actions">
+        <button type="button" class="board-action-btn" data-action="edit" data-id="${postId}">수정</button>
+        <button type="button" class="board-action-btn board-action-btn--danger" data-action="delete" data-id="${postId}">삭제</button>
+      </div>
+    `
+    : "";
+  const editForm = isOwner
+    ? `
+      <form class="board-edit-form is-hidden" data-id="${postId}">
+        <div class="board-field">
+          <label class="board-label" for="edit-title-${postId}">제목</label>
+          <input
+            id="edit-title-${postId}"
+            class="board-input board-edit-title"
+            type="text"
+            maxlength="80"
+            value="${escapeHtml(post.title || "")}"
+          />
+        </div>
+        <div class="board-field">
+          <label class="board-label" for="edit-content-${postId}">내용</label>
+          <textarea
+            id="edit-content-${postId}"
+            class="board-textarea board-edit-content"
+            rows="4"
+            maxlength="2000"
+          >${escapeHtml(post.content || "")}</textarea>
+        </div>
+        <div class="board-post-actions">
+          <button type="submit" class="board-action-btn">저장</button>
+          <button type="button" class="board-action-btn" data-action="cancel-edit" data-id="${postId}">취소</button>
+        </div>
+      </form>
+    `
+    : "";
+
+  return `
+    <article class="board-post-card" data-post-id="${postId}">
+      <div class="board-post-view">
+        <h3 class="board-post-title">${escapeHtml(post.title || "")}</h3>
+        <p class="board-post-meta">
+          ${escapeHtml(post.author || "")} · ${formatBoardDate(post.createdAt)}
+        </p>
+        <p class="board-post-content">${escapeHtml(post.content || "")}</p>
+        ${ownerButtons}
+      </div>
+      ${editForm}
+      <p class="board-post-status is-hidden" role="status" aria-live="polite"></p>
+    </article>
+  `;
+}
+
+function getBoardFormValues(formEl) {
+  const title = formEl.elements.title.value.trim();
+  const author = formEl.elements.author.value.trim();
+  const content = formEl.elements.content.value.trim();
+
+  return { title, author, content };
+}
+
+function isBoardFormValid(values) {
+  return values.title !== "" && values.author !== "" && values.content !== "";
+}
+
+async function ensureAnonymousAuth(auth) {
+  if (auth.currentUser) {
+    return auth.currentUser;
+  }
+
+  const result = await auth.signInAnonymously();
+  return result.user;
+}
+
+function setBoardPostStatus(cardEl, message, visible) {
+  const statusEl = cardEl.querySelector(".board-post-status");
+  if (!statusEl) {
+    return;
+  }
+
+  statusEl.textContent = message || "";
+  statusEl.classList.toggle("is-hidden", !visible);
+}
+
+function getBoardPostCard(postId) {
+  return document.querySelector(`.board-post-card[data-post-id="${postId}"]`);
+}
+
+function showBoardEditForm(cardEl) {
+  const viewEl = cardEl.querySelector(".board-post-view");
+  const editFormEl = cardEl.querySelector(".board-edit-form");
+
+  if (!viewEl || !editFormEl) {
+    return;
+  }
+
+  viewEl.classList.add("is-hidden");
+  editFormEl.classList.remove("is-hidden");
+  setBoardPostStatus(cardEl, "", false);
+}
+
+function hideBoardEditForm(cardEl) {
+  const viewEl = cardEl.querySelector(".board-post-view");
+  const editFormEl = cardEl.querySelector(".board-edit-form");
+
+  if (!viewEl || !editFormEl) {
+    return;
+  }
+
+  viewEl.classList.remove("is-hidden");
+  editFormEl.classList.add("is-hidden");
+}
+
+function getBoardEditValues(editFormEl) {
+  const title = editFormEl.querySelector(".board-edit-title").value.trim();
+  const content = editFormEl.querySelector(".board-edit-content").value.trim();
+
+  return { title, content };
+}
+
+async function loadBoardPosts(db, currentUid) {
+  const listEl = document.getElementById("board-posts-list");
+  const statusEl = document.getElementById("board-list-status");
+
+  if (!listEl || !statusEl) {
+    return;
+  }
+
+  setBoardStatus(statusEl, "loading", BOARD_LOADING_MESSAGE);
+  listEl.innerHTML = "";
+
+  try {
+    const snapshot = await db
+      .collection(BOARD_POSTS_COLLECTION)
+      .orderBy("createdAt", "desc")
+      .limit(BOARD_POSTS_LIMIT)
+      .get();
+
+    if (snapshot.empty) {
+      setBoardStatus(statusEl, "empty", BOARD_EMPTY_MESSAGE);
+      return;
+    }
+
+    listEl.innerHTML = snapshot.docs
+      .map((doc) => createBoardPostCard(doc.id, doc.data(), currentUid))
+      .join("");
+    setBoardStatus(statusEl, "hidden", "");
+  } catch {
+    setBoardStatus(statusEl, "error", BOARD_LOAD_ERROR_MESSAGE);
+    listEl.innerHTML = "";
+  }
+}
+
+async function saveBoardPost(db, values, uid) {
+  await db.collection(BOARD_POSTS_COLLECTION).add({
+    title: values.title,
+    author: values.author,
+    content: values.content,
+    uid,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+async function updateBoardPost(db, postId, values) {
+  await db.collection(BOARD_POSTS_COLLECTION).doc(postId).update({
+    title: values.title,
+    content: values.content,
+  });
+}
+
+async function deleteBoardPost(db, postId) {
+  await db.collection(BOARD_POSTS_COLLECTION).doc(postId).delete();
+}
+
+function bindBoardPostActions(db, currentUid) {
+  const listEl = document.getElementById("board-posts-list");
+  if (!listEl) {
+    return;
+  }
+
+  listEl.addEventListener("click", async (event) => {
+    const actionBtn = event.target.closest("[data-action]");
+    if (!actionBtn) {
+      return;
+    }
+
+    const action = actionBtn.dataset.action;
+    const postId = actionBtn.dataset.id;
+    const cardEl = getBoardPostCard(postId);
+
+    if (!cardEl) {
+      return;
+    }
+
+    if (action === "edit") {
+      showBoardEditForm(cardEl);
+      return;
+    }
+
+    if (action === "cancel-edit") {
+      hideBoardEditForm(cardEl);
+      setBoardPostStatus(cardEl, "", false);
+      return;
+    }
+
+    if (action === "delete") {
+      const confirmed = window.confirm("이 글을 삭제할까요?");
+      if (!confirmed) {
+        return;
+      }
+
+      actionBtn.disabled = true;
+      setBoardPostStatus(cardEl, BOARD_DELETING_MESSAGE, true);
+
+      try {
+        await deleteBoardPost(db, postId);
+        setBoardPostStatus(cardEl, BOARD_DELETE_SUCCESS_MESSAGE, true);
+        await loadBoardPosts(db, currentUid);
+      } catch {
+        setBoardPostStatus(cardEl, BOARD_DELETE_ERROR_MESSAGE, true);
+        actionBtn.disabled = false;
+      }
+    }
+  });
+
+  listEl.addEventListener("submit", async (event) => {
+    const editFormEl = event.target.closest(".board-edit-form");
+    if (!editFormEl) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const postId = editFormEl.dataset.id;
+    const cardEl = getBoardPostCard(postId);
+    const values = getBoardEditValues(editFormEl);
+    const saveBtn = editFormEl.querySelector('button[type="submit"]');
+
+    if (!values.title || !values.content) {
+      setBoardPostStatus(cardEl, BOARD_EDIT_VALIDATION_MESSAGE, true);
+      return;
+    }
+
+    if (saveBtn) {
+      saveBtn.disabled = true;
+    }
+    setBoardPostStatus(cardEl, BOARD_UPDATING_MESSAGE, true);
+
+    try {
+      await updateBoardPost(db, postId, values);
+      setBoardPostStatus(cardEl, BOARD_UPDATE_SUCCESS_MESSAGE, true);
+      await loadBoardPosts(db, currentUid);
+    } catch {
+      setBoardPostStatus(cardEl, BOARD_UPDATE_ERROR_MESSAGE, true);
+      if (saveBtn) {
+        saveBtn.disabled = false;
+      }
+    }
+  });
+}
+
+function initBoardPage() {
+  if (typeof firebase === "undefined") {
+    const listStatusEl = document.getElementById("board-list-status");
+    setBoardStatus(listStatusEl, "error", BOARD_LOAD_ERROR_MESSAGE);
+    return;
+  }
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+  }
+
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const formEl = document.getElementById("board-form");
+  const formStatusEl = document.getElementById("board-form-status");
+  const listStatusEl = document.getElementById("board-list-status");
+  const submitBtn = formEl.querySelector(".board-submit-btn");
+
+  (async () => {
+    let currentUid = null;
+
+    try {
+      const user = await ensureAnonymousAuth(auth);
+      currentUid = user.uid;
+      bindBoardPostActions(db, currentUid);
+      await loadBoardPosts(db, currentUid);
+    } catch {
+      setBoardStatus(listStatusEl, "error", BOARD_AUTH_ERROR_MESSAGE);
+      return;
+    }
+
+    formEl.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const values = getBoardFormValues(formEl);
+
+      if (!isBoardFormValid(values)) {
+        setBoardStatus(formStatusEl, "error", BOARD_VALIDATION_MESSAGE);
+        return;
+      }
+
+      if (!currentUid) {
+        setBoardStatus(formStatusEl, "error", BOARD_AUTH_ERROR_MESSAGE);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      setBoardStatus(formStatusEl, "saving", BOARD_SAVING_MESSAGE);
+
+      try {
+        await saveBoardPost(db, values, currentUid);
+        setBoardStatus(formStatusEl, "success", BOARD_SAVE_SUCCESS_MESSAGE);
+        formEl.reset();
+        await loadBoardPosts(db, currentUid);
+      } catch {
+        setBoardStatus(formStatusEl, "error", BOARD_SAVE_ERROR_MESSAGE);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  })();
+}
+
+if (isBoardPage()) {
+  initBoardPage();
+}
