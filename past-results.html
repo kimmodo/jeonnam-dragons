@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>이전 경기결과 | 2026전남드래곤즈</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <a class="back-link" href="./schedule.html">← 일정 요약으로 돌아가기</a>
+
+      <section class="content-card">
+        <h1>이전 경기결과</h1>
+        <p class="desc">공식 API에서 불러온 지난 경기 전체 목록입니다.</p>
+
+        <div
+          id="schedule-status"
+          class="schedule-status"
+          role="status"
+          aria-live="polite"
+        ></div>
+        <div id="past-games-list" class="games-list"></div>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

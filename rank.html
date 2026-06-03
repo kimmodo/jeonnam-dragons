@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2026시즌 순위 | 2026전남드래곤즈</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <a class="back-link" href="./index.html">← 메인으로 돌아가기</a>
+
+      <section class="content-card">
+        <h1>2026시즌 순위</h1>
+        <p class="desc">공식 API에서 불러온 2026시즌 순위입니다.</p>
+
+        <div id="rank-status" class="rank-status" role="status" aria-live="polite"></div>
+
+        <div class="table-wrap">
+          <table class="rank-table">
+            <thead>
+              <tr>
+                <th scope="col">순위</th>
+                <th scope="col">팀</th>
+                <th scope="col">승점</th>
+                <th scope="col">경기</th>
+                <th scope="col">승</th>
+                <th scope="col">무</th>
+                <th scope="col">패</th>
+                <th scope="col">득점</th>
+                <th scope="col">실점</th>
+                <th scope="col">득실</th>
+              </tr>
+            </thead>
+            <tbody id="rank-list"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

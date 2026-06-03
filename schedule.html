@@ -12,37 +12,38 @@
 
       <section class="content-card">
         <h1>2026시즌 일정/결과</h1>
+        <p class="desc">공식 API에서 불러온 일정/결과 요약입니다.</p>
 
-        <ul class="list">
-          <li>03.09 홈 개막전 vs 부산 - <strong>2:1 승</strong></li>
-          <li>03.16 원정 vs 수원 - <strong>1:1 무</strong></li>
-          <li>03.23 홈 vs 성남 - <strong>0:2 패</strong></li>
-        </ul>
+        <div
+          id="schedule-status"
+          class="schedule-status"
+          role="status"
+          aria-live="polite"
+        ></div>
+
+        <h2 class="section-subtitle">다음 경기</h2>
+        <div id="next-game-featured"></div>
+
+        <h2 class="section-subtitle">최근 경기 결과</h2>
+        <div id="recent-past-games" class="games-list games-list--compact"></div>
+
+        <nav class="full-view-nav">
+          <a class="full-view-btn" href="./past-results.html"
+            >이전 경기결과 전체보기</a
+          >
+          <a class="full-view-btn" href="./upcoming-games.html"
+            >남은 경기 전체보기</a
+          >
+        </nav>
 
         <a
-          class="action-btn"
+          class="official-link"
           href="https://dragons.co.kr/match/list"
           target="_blank"
           rel="noopener noreferrer"
         >
-          전남드래곤즈 공식 일정/결과 보기
+          공식 일정/결과 페이지 보기
         </a>
-
-        <p class="notice">최신 일정과 결과는 공식 페이지에서 확인하세요.</p>
-      </section>
-      <section class="card">
-        <h2>공식 일정/결과 페이지 테스트</h2>
-        <p>아래에 공식 페이지가 보이면 iframe 연결이 가능한 상태입니다.</p>
-      
-        <iframe
-          src="https://dragons.co.kr/match/list"
-          class="official-frame"
-          title="전남드래곤즈 공식 일정/결과"
-        ></iframe>
-      
-        <p class="small-text">
-          만약 위 화면이 비어 있거나 오류가 뜨면, 공식 사이트가 iframe 삽입을 막은 것입니다.
-        </p>
       </section>
     </main>
 
