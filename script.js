@@ -1,23 +1,9 @@
-const tabButtons = document.querySelectorAll(".tab-btn");
-const tabPanels = document.querySelectorAll(".tab-panel");
+// 공통 스크립트
+// 페이지 이동은 HTML의 a 태그로 처리합니다.
 
-tabButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const targetId = button.dataset.target;
+// 새 탭으로 열리는 외부 링크에 보안 속성을 추가합니다.
+const externalLinks = document.querySelectorAll('a[target="_blank"]');
 
-    tabButtons.forEach((btn) => {
-      btn.classList.remove("active");
-    });
-
-    tabPanels.forEach((panel) => {
-      panel.classList.remove("active");
-    });
-
-    button.classList.add("active");
-
-    const targetPanel = document.getElementById(targetId);
-    if (targetPanel) {
-      targetPanel.classList.add("active");
-    }
-  });
+externalLinks.forEach((link) => {
+  link.rel = "noopener noreferrer";
 });
