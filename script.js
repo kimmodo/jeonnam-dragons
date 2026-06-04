@@ -271,6 +271,177 @@ function hasScheduleData(pageType, pastGames, nextGames) {
   return false;
 }
 
+const HOME_NEXT_EMPTY_MESSAGE = "예정된 다음 경기가 없습니다.";
+const HOME_PAST_EMPTY_MESSAGE = "최근 경기 결과가 없습니다.";
+const HOME_SCHEDULE_LOADING_MESSAGE = "경기 정보를 불러오는 중...";
+const HOME_SCHEDULE_ERROR_MESSAGE =
+  "경기 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
+
+function getJeonnamOpponent(game) {
+  if (game.home_team_name === JEONNAM_TEAM_NAME) {
+    return game.away_team_name || "-";
+  }
+  if (game.away_team_name === JEONNAM_TEAM_NAME) {
+    return game.home_team_name || "-";
+  }
+  return "-";
+}
+
+function getJeonnamHomeAwayLabel(game) {
+  if (game.home_team_name === JEONNAM_TEAM_NAME) {
+    return "홈";
+  }
+  if (game.away_team_name === JEONNAM_TEAM_NAME) {
+    return "원정";
+  }
+  return "-";
+}
+
+function createHomeGameRow(label, value) {
+  return `<p class="home-game-card__row"><strong>${label}</strong> ${value}</p>`;
+}
+
+function createHomeNextGameCard(game) {
+  const timeText = formatGameTime(game.game_time);
+  const dateText = `${game.game_date}${game.game_yoil ? ` (${game.game_yoil})` : ""}`;
+
+  return `
+    <article class="home-game-card home-game-card--next">
+      <h2 class="home-game-card__title">다음 경기</h2>
+      ${createHomeGameRow("날짜", dateText)}
+      ${timeText ? createHomeGameRow("시간", timeText) : ""}
+      ${createHomeGameRow("상대", getJeonnamOpponent(game))}
+      ${createHomeGameRow("홈/원정", getJeonnamHomeAwayLabel(game))}
+      ${createHomeGameRow("경기장", game.field_name || "-")}
+      ${game.meet_name ? `<p class="home-game-card__meta">${game.meet_name}</p>` : ""}
+    </article>
+  `;
+}
+
+function createHomePastGameCard(game) {
+  const result = getJeonnamResult(game);
+  const badgeClass = getResultBadgeClass(result);
+  const badgeHtml = result
+    ? `<span class="result-badge ${badgeClass}">${result}</span>`
+    : "";
+  const dateText = `${game.game_date}${game.game_yoil ? ` (${game.game_yoil})` : ""}`;
+  const scoreText = `${game.home_team_name} ${game.home_team_goal} : ${game.away_team_goal} ${game.away_team_name}`;
+
+  return `
+    <article class="home-game-card home-game-card--past">
+      <div class="home-game-card__head">
+        <h2 class="home-game-card__title">최근 경기</h2>
+        ${badgeHtml}
+      </div>
+      ${createHomeGameRow("날짜", dateText)}
+      ${createHomeGameRow("상대", getJeonnamOpponent(game))}
+      ${createHomeGameRow("스코어", scoreText)}
+      ${createHomeGameRow("홈/원정", getJeonnamHomeAwayLabel(game))}
+      ${result ? createHomeGameRow("결과", result) : ""}
+      ${game.meet_name ? `<p class="home-game-card__meta">${game.meet_name}</p>` : ""}
+    </article>
+  `;
+}
+
+function createHomeGamePlaceholderCard(title, message, variant) {
+  return `
+    <article class="home-game-card home-game-card--${variant}">
+      <h2 class="home-game-card__title">${title}</h2>
+      <p class="home-game-card__empty">${message}</p>
+    </article>
+  `;
+}
+
+function renderHomeScheduleCards(pastGames, nextGames) {
+  const nextEl = document.getElementById("home-next-game");
+  const pastEl = document.getElementById("home-recent-past-game");
+
+  if (!nextEl || !pastEl) {
+    return;
+  }
+
+  if (nextGames.length === 0) {
+    nextEl.innerHTML = createHomeGamePlaceholderCard(
+      "다음 경기",
+      HOME_NEXT_EMPTY_MESSAGE,
+      "next"
+    );
+  } else {
+    nextEl.innerHTML = createHomeNextGameCard(nextGames[0]);
+  }
+
+  if (pastGames.length === 0) {
+    pastEl.innerHTML = createHomeGamePlaceholderCard(
+      "최근 경기",
+      HOME_PAST_EMPTY_MESSAGE,
+      "past"
+    );
+  } else {
+    pastEl.innerHTML = createHomePastGameCard(pastGames[0]);
+  }
+}
+
+function renderHomeScheduleLoading() {
+  const nextEl = document.getElementById("home-next-game");
+  const pastEl = document.getElementById("home-recent-past-game");
+
+  if (!nextEl || !pastEl) {
+    return;
+  }
+
+  const loadingCard = (title) =>
+    `<article class="home-game-card"><h2 class="home-game-card__title">${title}</h2><p class="home-game-card__empty">${HOME_SCHEDULE_LOADING_MESSAGE}</p></article>`;
+
+  nextEl.innerHTML = loadingCard("다음 경기");
+  pastEl.innerHTML = loadingCard("최근 경기");
+}
+
+function renderHomeScheduleError() {
+  const nextEl = document.getElementById("home-next-game");
+  const pastEl = document.getElementById("home-recent-past-game");
+
+  if (!nextEl || !pastEl) {
+    return;
+  }
+
+  const errorCard = (title) =>
+    `<article class="home-game-card"><h2 class="home-game-card__title">${title}</h2><p class="home-game-card__empty">${HOME_SCHEDULE_ERROR_MESSAGE}</p></article>`;
+
+  nextEl.innerHTML = errorCard("다음 경기");
+  pastEl.innerHTML = errorCard("최근 경기");
+}
+
+async function loadHomeScheduleFromApi() {
+  const nextEl = document.getElementById("home-next-game");
+  const pastEl = document.getElementById("home-recent-past-game");
+
+  if (!nextEl || !pastEl) {
+    return;
+  }
+
+  renderHomeScheduleLoading();
+
+  try {
+    const response = await fetch(GAME_API_URL);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const json = await response.json();
+
+    if (!json.success || !json.data) {
+      throw new Error("API 응답 형식 오류");
+    }
+
+    const pastGames = sortPastGames(json.data.past_game || []);
+    const nextGames = sortNextGames(json.data.next_game || []);
+    renderHomeScheduleCards(pastGames, nextGames);
+  } catch {
+    renderHomeScheduleError();
+  }
+}
+
 // schedule.html 요약 화면
 function renderSummaryPage(pastGames, nextGames) {
   const nextFeaturedEl = document.getElementById("next-game-featured");
@@ -385,6 +556,10 @@ async function loadScheduleFromApi() {
 // 일정 관련 페이지에서만 API 호출
 if (getSchedulePageType()) {
   loadScheduleFromApi();
+}
+
+if (document.getElementById("home-next-game")) {
+  loadHomeScheduleFromApi();
 }
 
 // --- rank.html 전용: 2026시즌 순위 ---

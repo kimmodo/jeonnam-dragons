@@ -64,7 +64,7 @@ img {
   max-width: 100%;
   margin: 0;
   padding: var(--space-md) var(--space-sm) 4px;
-  font-size: clamp(2.2rem, 11vw, 4.8rem);
+  font-size: clamp(2.2rem, 11vw, 4.2rem);
   font-weight: 900;
   letter-spacing: 0.06em;
   line-height: 1.05;
@@ -524,10 +524,112 @@ h2,
   flex-direction: column;
 }
 
-#home-page .menu-card {
+.home-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--space-sm);
+  align-items: start;
+}
+
+.home-games {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.home-game-slot {
+  min-width: 0;
+}
+
+.home-game-card {
+  padding: 12px;
+  text-align: left;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+
+.home-game-card--next {
+  border-left: 3px dashed var(--color-text);
+}
+
+.home-game-card--past {
+  border-left: 3px solid var(--color-text);
+}
+
+.home-game-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: 6px;
+}
+
+.home-game-card__title {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.home-game-card__head .home-game-card__title {
+  margin-bottom: 0;
+}
+
+.home-game-card__row {
+  margin: 3px 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.home-game-card__row strong {
+  display: inline-block;
+  min-width: 3.8em;
+  font-weight: bold;
+}
+
+.home-game-card__meta {
+  margin: 6px 0 0;
+  font-size: 0.76rem;
+  opacity: 0.75;
+}
+
+.home-game-card__empty {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  opacity: 0.85;
+}
+
+#home-page .home-menu.menu-card {
   position: relative;
   z-index: 2;
-  margin-top: 0;
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: var(--space-sm);
+  align-self: start;
+}
+
+#home-page .home-menu .nav-btn {
+  width: 100%;
+  max-width: 150px;
+  margin-left: auto;
+  padding: 10px 10px;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 640px) {
+  .home-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  #home-page .home-menu .nav-btn {
+    max-width: none;
+    margin-left: 0;
+  }
 }
 
 .home-footer {

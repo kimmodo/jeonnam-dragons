@@ -32,12 +32,19 @@
       </header>
 
       <div class="home-main">
-        <nav class="menu-card">
-          <a class="nav-btn" href="./schedule.html">2026시즌 일정/결과</a>
-          <a class="nav-btn" href="./rank.html">2026시즌 순위</a>
-          <a class="nav-btn" href="./board.html">자유게시판</a>
-          <a class="nav-btn" href="./gallery.html">사진첩</a>
-        </nav>
+        <div class="home-dashboard">
+          <div class="home-games">
+            <div id="home-next-game" class="home-game-slot" aria-live="polite"></div>
+            <div id="home-recent-past-game" class="home-game-slot" aria-live="polite"></div>
+          </div>
+
+          <nav class="menu-card home-menu" aria-label="바로가기">
+            <a class="nav-btn" href="./schedule.html">2026시즌 일정/결과</a>
+            <a class="nav-btn" href="./rank.html">2026시즌 순위</a>
+            <a class="nav-btn" href="./board.html">자유게시판</a>
+            <a class="nav-btn" href="./gallery.html">사진첩</a>
+          </nav>
+        </div>
 
         <div class="bottom-character-wrap">
           <img
