@@ -687,8 +687,10 @@ const FIREBASE_CONFIG = {
 };
 
 const BOARD_POSTS_COLLECTION = "posts";
-const BOARD_POSTS_LIMIT = 20;
-const BOARD_POSTS_FETCH_LIMIT = 40;
+const BOARD_PAGE_SIZE = 5;
+
+let boardPostsCache = [];
+let boardCurrentPage = 1;
 const BOARD_LOADING_MESSAGE = "게시글을 불러오는 중...";
 const BOARD_LOAD_ERROR_MESSAGE =
   "게시글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
@@ -910,9 +912,117 @@ function getBoardEditValues(editFormEl) {
   return { title, content };
 }
 
-async function loadBoardPosts(db, currentUid, isAdminUser) {
+function sortBoardPostsForDisplay(docs) {
+  const noticePosts = [];
+  const regularPosts = [];
+
+  docs.forEach((doc) => {
+    const item = { id: doc.id, data: doc.data() };
+    if (doc.data().isNotice === true) {
+      noticePosts.push(item);
+    } else {
+      regularPosts.push(item);
+    }
+  });
+
+  return [...noticePosts, ...regularPosts];
+}
+
+async function fetchBoardPosts(db) {
+  const snapshot = await db
+    .collection(BOARD_POSTS_COLLECTION)
+    .orderBy("createdAt", "desc")
+    .get();
+
+  return sortBoardPostsForDisplay(snapshot.docs);
+}
+
+function getBoardTotalPages() {
+  if (boardPostsCache.length === 0) {
+    return 0;
+  }
+
+  return Math.ceil(boardPostsCache.length / BOARD_PAGE_SIZE);
+}
+
+function clampBoardPage(page) {
+  const totalPages = getBoardTotalPages();
+  if (totalPages === 0) {
+    return 1;
+  }
+
+  return Math.min(Math.max(1, page), totalPages);
+}
+
+function renderBoardPagination() {
+  const paginationEl = document.getElementById("board-pagination");
+  if (!paginationEl) {
+    return;
+  }
+
+  const totalPages = getBoardTotalPages();
+
+  if (totalPages <= 1) {
+    paginationEl.innerHTML = "";
+    paginationEl.classList.add("is-hidden");
+    return;
+  }
+
+  const currentPage = clampBoardPage(boardCurrentPage);
+  let html = "";
+
+  for (let page = 1; page <= totalPages; page += 1) {
+    const activeClass = page === currentPage ? " is-active" : "";
+    html += `<button type="button" class="board-page-btn${activeClass}" data-page="${page}">${page}</button>`;
+  }
+
+  if (currentPage < totalPages) {
+    html += `<button type="button" class="board-page-btn board-page-btn--next" data-page="${currentPage + 1}">다음</button>`;
+  }
+
+  paginationEl.innerHTML = html;
+  paginationEl.classList.remove("is-hidden");
+}
+
+function renderBoardPostsPage(currentUid, isAdminUser) {
   const listEl = document.getElementById("board-posts-list");
   const statusEl = document.getElementById("board-list-status");
+  const paginationEl = document.getElementById("board-pagination");
+
+  if (!listEl || !statusEl) {
+    return;
+  }
+
+  if (boardPostsCache.length === 0) {
+    listEl.innerHTML = "";
+    if (paginationEl) {
+      paginationEl.innerHTML = "";
+      paginationEl.classList.add("is-hidden");
+    }
+    setBoardStatus(statusEl, "empty", BOARD_EMPTY_MESSAGE);
+    return;
+  }
+
+  boardCurrentPage = clampBoardPage(boardCurrentPage);
+  const startIndex = (boardCurrentPage - 1) * BOARD_PAGE_SIZE;
+  const pagePosts = boardPostsCache.slice(
+    startIndex,
+    startIndex + BOARD_PAGE_SIZE
+  );
+
+  listEl.innerHTML = pagePosts
+    .map((post) =>
+      createBoardPostCard(post.id, post.data, currentUid, isAdminUser)
+    )
+    .join("");
+  renderBoardPagination();
+  setBoardStatus(statusEl, "hidden", "");
+}
+
+async function loadBoardPosts(db, currentUid, isAdminUser, page = 1) {
+  const listEl = document.getElementById("board-posts-list");
+  const statusEl = document.getElementById("board-list-status");
+  const paginationEl = document.getElementById("board-pagination");
 
   if (!listEl || !statusEl) {
     return;
@@ -920,42 +1030,53 @@ async function loadBoardPosts(db, currentUid, isAdminUser) {
 
   setBoardStatus(statusEl, "loading", BOARD_LOADING_MESSAGE);
   listEl.innerHTML = "";
+  if (paginationEl) {
+    paginationEl.innerHTML = "";
+    paginationEl.classList.add("is-hidden");
+  }
 
   try {
-    const [noticeSnapshot, recentSnapshot] = await Promise.all([
-      db
-        .collection(BOARD_POSTS_COLLECTION)
-        .where("isNotice", "==", true)
-        .orderBy("createdAt", "desc")
-        .get(),
-      db
-        .collection(BOARD_POSTS_COLLECTION)
-        .orderBy("createdAt", "desc")
-        .limit(BOARD_POSTS_FETCH_LIMIT)
-        .get(),
-    ]);
+    boardPostsCache = await fetchBoardPosts(db);
+    boardCurrentPage = page;
+    renderBoardPostsPage(currentUid, isAdminUser);
+  } catch (error) {
+    console.error("[board] 게시글 불러오기 실패:", error);
+    boardPostsCache = [];
+    setBoardStatus(statusEl, "error", BOARD_LOAD_ERROR_MESSAGE);
+    listEl.innerHTML = "";
+    if (paginationEl) {
+      paginationEl.innerHTML = "";
+      paginationEl.classList.add("is-hidden");
+    }
+  }
+}
 
-    const regularDocs = recentSnapshot.docs
-      .filter((doc) => doc.data().isNotice !== true)
-      .slice(0, BOARD_POSTS_LIMIT);
-    const allDocs = [...noticeSnapshot.docs, ...regularDocs];
+function bindBoardPagination(getBoardContext) {
+  const paginationEl = document.getElementById("board-pagination");
+  if (!paginationEl) {
+    return;
+  }
 
-    if (allDocs.length === 0) {
-      setBoardStatus(statusEl, "empty", BOARD_EMPTY_MESSAGE);
+  paginationEl.addEventListener("click", (event) => {
+    const pageBtn = event.target.closest("[data-page]");
+    if (!pageBtn) {
       return;
     }
 
-    listEl.innerHTML = allDocs
-      .map((doc) =>
-        createBoardPostCard(doc.id, doc.data(), currentUid, isAdminUser)
-      )
-      .join("");
-    setBoardStatus(statusEl, "hidden", "");
-  } catch (error) {
-    console.error("[board] 게시글 불러오기 실패:", error);
-    setBoardStatus(statusEl, "error", BOARD_LOAD_ERROR_MESSAGE);
-    listEl.innerHTML = "";
-  }
+    const page = Number(pageBtn.dataset.page);
+    if (!page || page === boardCurrentPage) {
+      return;
+    }
+
+    const { currentUid, isAdminUser } = getBoardContext();
+    boardCurrentPage = page;
+    renderBoardPostsPage(currentUid, isAdminUser);
+
+    const listEl = document.getElementById("board-posts-list");
+    if (listEl) {
+      listEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
 }
 
 async function saveBoardPost(db, values, uid) {
@@ -1024,7 +1145,7 @@ function bindBoardPostActions(db, getBoardContext) {
       try {
         await deleteBoardPost(db, postId);
         setBoardPostStatus(cardEl, BOARD_DELETE_SUCCESS_MESSAGE, true);
-        await loadBoardPosts(db, currentUid, isAdminUser);
+        await loadBoardPosts(db, currentUid, isAdminUser, boardCurrentPage);
       } catch (error) {
         console.error("[board] 글 삭제 실패:", error);
         setBoardPostStatus(cardEl, BOARD_DELETE_ERROR_MESSAGE, true);
@@ -1060,7 +1181,7 @@ function bindBoardPostActions(db, getBoardContext) {
     try {
       await updateBoardPost(db, postId, values);
       setBoardPostStatus(cardEl, BOARD_UPDATE_SUCCESS_MESSAGE, true);
-      await loadBoardPosts(db, currentUid, isAdminUser);
+      await loadBoardPosts(db, currentUid, isAdminUser, boardCurrentPage);
     } catch (error) {
       console.error("[board] 글 수정 실패:", error);
       setBoardPostStatus(cardEl, BOARD_UPDATE_ERROR_MESSAGE, true);
@@ -1111,7 +1232,8 @@ function initBoardPage() {
       isAdminUser = isBoardAdmin(currentUid);
       updateBoardAdminUi(currentUid);
       bindBoardPostActions(db, getBoardContext);
-      await loadBoardPosts(db, currentUid, isAdminUser);
+      bindBoardPagination(getBoardContext);
+      await loadBoardPosts(db, currentUid, isAdminUser, 1);
     } catch {
       setBoardStatus(listStatusEl, "error", BOARD_AUTH_ERROR_MESSAGE);
       return;
@@ -1140,7 +1262,7 @@ function initBoardPage() {
         setBoardStatus(formStatusEl, "success", BOARD_SAVE_SUCCESS_MESSAGE);
         formEl.reset();
         updateBoardAdminUi(currentUid);
-        await loadBoardPosts(db, currentUid, isAdminUser);
+        await loadBoardPosts(db, currentUid, isAdminUser, 1);
       } catch (error) {
         console.error("[board] 글 작성 실패:", error);
         setBoardStatus(formStatusEl, "error", BOARD_SAVE_ERROR_MESSAGE);
