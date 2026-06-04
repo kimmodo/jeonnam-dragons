@@ -1658,7 +1658,7 @@ function bindBoardPagination(getBoardContext) {
 }
 
 async function saveBoardPost(db, values, uid, authorNickname) {
-  await db.collection(BOARD_POSTS_COLLECTION).add({
+  const postData = {
     title: values.title,
     author: authorNickname,
     authorNickname,
@@ -1668,7 +1668,14 @@ async function saveBoardPost(db, values, uid, authorNickname) {
     likeCount: 0,
     viewCount: 0,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-  });
+  };
+
+  console.log("[board] 작성 직전 uid:", uid);
+  console.log("[board] 작성 직전 isAdmin:", isBoardAdmin(uid));
+  console.log("[board] 작성 직전 isNotice:", Boolean(values.isNotice));
+  console.log("[board] 작성할 postData:", postData);
+
+  await db.collection(BOARD_POSTS_COLLECTION).add(postData);
 }
 
 async function updateBoardPost(db, postId, values) {
@@ -2239,6 +2246,8 @@ function initBoardPage() {
       await loadBoardPosts(db, currentUid, isAdminUser, isLoggedIn, 1);
     } catch (error) {
       console.error("[board] 글 작성 실패:", error);
+      console.error("[board] 글 작성 실패 code:", error.code);
+      console.error("[board] 글 작성 실패 message:", error.message);
       setBoardStatus(formStatusEl, "error", BOARD_SAVE_ERROR_MESSAGE);
     } finally {
       submitBtn.disabled = false;
