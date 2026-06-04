@@ -672,9 +672,9 @@ if (isGalleryPage()) {
 
 // --- board.html 전용: Firestore 자유게시판 ---
 
-// 관리자 uid를 아래 배열에 추가하세요. (콘솔에 출력된 uid 확인)
+// 관리자 Google uid를 아래 배열에 추가하세요.
 const ADMIN_UIDS = [
-  // "여기에_관리자_uid_입력",
+  // "여기에_Google_uid_입력",
 ];
 
 const FIREBASE_CONFIG = {
@@ -687,13 +687,21 @@ const FIREBASE_CONFIG = {
 };
 
 const BOARD_POSTS_COLLECTION = "posts";
+const BOARD_USERS_COLLECTION = "users";
 const BOARD_PAGE_SIZE = 5;
 const BOARD_COMMENTS_LIMIT = 10;
 const BOARD_COMMENT_LOAD_ERROR_MESSAGE =
   "댓글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
 const BOARD_COMMENT_EMPTY_MESSAGE = "첫 댓글을 남겨보세요.";
-const BOARD_COMMENT_VALIDATION_MESSAGE =
-  "작성자와 댓글 내용을 입력해주세요.";
+const BOARD_COMMENT_VALIDATION_MESSAGE = "댓글 내용을 입력해주세요.";
+const BOARD_LOGIN_REQUIRED_MESSAGE =
+  "Google 로그인 후 이용할 수 있습니다.";
+const BOARD_NICKNAME_SAVE_SUCCESS_MESSAGE = "닉네임이 저장되었습니다.";
+const BOARD_NICKNAME_SAVE_ERROR_MESSAGE =
+  "닉네임 저장에 실패했습니다. 잠시 후 다시 시도해주세요.";
+const BOARD_NICKNAME_VALIDATION_MESSAGE = "닉네임을 입력해주세요.";
+const BOARD_GOOGLE_LOGIN_ERROR_MESSAGE =
+  "Google 로그인에 실패했습니다. 다시 시도해주세요.";
 const BOARD_COMMENT_SAVE_ERROR_MESSAGE =
   "댓글 등록에 실패했습니다. 잠시 후 다시 시도해주세요.";
 const BOARD_COMMENT_DELETE_ERROR_MESSAGE =
@@ -702,6 +710,8 @@ const BOARD_COMMENT_DELETE_ERROR_MESSAGE =
 let boardNoticePostsCache = [];
 let boardRegularPostsCache = [];
 let boardCurrentPage = 1;
+let boardAuthUser = null;
+let boardUserProfile = null;
 const BOARD_LOADING_MESSAGE = "게시글을 불러오는 중...";
 const BOARD_LOAD_ERROR_MESSAGE =
   "게시글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
@@ -710,9 +720,7 @@ const BOARD_SAVING_MESSAGE = "게시글을 등록하는 중...";
 const BOARD_SAVE_SUCCESS_MESSAGE = "등록되었습니다.";
 const BOARD_SAVE_ERROR_MESSAGE =
   "등록에 실패했습니다. 잠시 후 다시 시도해주세요.";
-const BOARD_VALIDATION_MESSAGE = "제목, 작성자, 내용을 모두 입력해주세요.";
-const BOARD_AUTH_ERROR_MESSAGE =
-  "접속 준비에 실패했습니다. 새로고침 후 다시 시도해주세요.";
+const BOARD_VALIDATION_MESSAGE = "제목과 내용을 모두 입력해주세요.";
 const BOARD_UPDATING_MESSAGE = "수정하는 중...";
 const BOARD_UPDATE_SUCCESS_MESSAGE = "수정되었습니다.";
 const BOARD_UPDATE_ERROR_MESSAGE =
@@ -729,6 +737,98 @@ function isBoardPage() {
 
 function isBoardAdmin(uid) {
   return Boolean(uid && ADMIN_UIDS.includes(uid));
+}
+
+function getBoardDisplayAuthor(item) {
+  return item.authorNickname || item.author || "익명";
+}
+
+function getBoardNickname() {
+  const nickname = boardUserProfile?.nickname;
+  return typeof nickname === "string" ? nickname.trim() : "";
+}
+
+function updateBoardAuthUi() {
+  const guestEl = document.getElementById("board-auth-guest");
+  const userEl = document.getElementById("board-auth-user");
+  const writeSectionEl = document.getElementById("board-write-section");
+  const nicknameEl = document.getElementById("board-current-nickname");
+  const nicknameInputEl = document.getElementById("board-nickname-input");
+  const isLoggedIn = Boolean(boardAuthUser);
+
+  if (guestEl) {
+    guestEl.classList.toggle("is-hidden", isLoggedIn);
+  }
+
+  if (userEl) {
+    userEl.classList.toggle("is-hidden", !isLoggedIn);
+  }
+
+  if (writeSectionEl) {
+    writeSectionEl.classList.toggle("is-hidden", !isLoggedIn);
+  }
+
+  if (isLoggedIn && nicknameEl) {
+    nicknameEl.textContent = getBoardNickname() || "-";
+  }
+
+  if (isLoggedIn && nicknameInputEl) {
+    nicknameInputEl.value = getBoardNickname();
+  }
+}
+
+function setBoardNicknameStatus(message, visible) {
+  const statusEl = document.getElementById("board-nickname-status");
+  if (!statusEl) {
+    return;
+  }
+
+  statusEl.textContent = message || "";
+  statusEl.classList.toggle("is-hidden", !visible);
+}
+
+async function fetchUserProfile(db, uid) {
+  const snapshot = await db.collection(BOARD_USERS_COLLECTION).doc(uid).get();
+  if (!snapshot.exists) {
+    return null;
+  }
+
+  return snapshot.data();
+}
+
+async function ensureUserProfile(db, user) {
+  const userRef = db.collection(BOARD_USERS_COLLECTION).doc(user.uid);
+  const snapshot = await userRef.get();
+
+  if (!snapshot.exists) {
+    const nickname = (user.displayName || "팬").trim() || "팬";
+
+    await userRef.set({
+      nickname,
+      email: user.email || "",
+      photoURL: user.photoURL || "",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  return fetchUserProfile(db, user.uid);
+}
+
+async function updateUserNickname(db, uid, nickname) {
+  await db.collection(BOARD_USERS_COLLECTION).doc(uid).update({
+    nickname,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+async function signInWithGoogle(auth) {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  await auth.signInWithPopup(provider);
+}
+
+async function signOutFromBoard(auth) {
+  await auth.signOut();
 }
 
 function updateBoardAdminUi(currentUid) {
@@ -780,8 +880,16 @@ function formatBoardDate(value) {
   });
 }
 
-function createBoardPostCard(postId, post, currentUid, isAdminUser) {
-  const isOwner = Boolean(post.uid && post.uid === currentUid);
+function createBoardPostCard(
+  postId,
+  post,
+  currentUid,
+  isAdminUser,
+  isLoggedIn
+) {
+  const isOwner = Boolean(
+    isLoggedIn && post.uid && post.uid === currentUid
+  );
   const isNotice = isBoardNoticePost(post);
   const canEdit = isOwner;
   const canDelete = isOwner || isAdminUser;
@@ -841,7 +949,7 @@ function createBoardPostCard(postId, post, currentUid, isAdminUser) {
         ${noticeBadge}
         <h3 class="board-post-title">${escapeHtml(post.title || "")}</h3>
         <p class="board-post-meta">
-          ${escapeHtml(post.author || "")} · ${formatBoardDate(post.createdAt)}
+          ${escapeHtml(getBoardDisplayAuthor(post))} · ${formatBoardDate(post.createdAt)}
         </p>
         <p class="board-post-content">${escapeHtml(post.content || "")}</p>
         ${postActions}
@@ -864,15 +972,10 @@ function createBoardPostCard(postId, post, currentUid, isAdminUser) {
             aria-live="polite"
           ></p>
           <ul class="board-comments-list"></ul>
+          ${
+            isLoggedIn
+              ? `
           <form class="board-comment-form">
-            <input
-              class="board-comment-input"
-              type="text"
-              name="author"
-              maxlength="30"
-              placeholder="닉네임"
-              autocomplete="nickname"
-            />
             <textarea
               class="board-comment-textarea"
               name="content"
@@ -882,6 +985,9 @@ function createBoardPostCard(postId, post, currentUid, isAdminUser) {
             ></textarea>
             <button type="submit" class="board-comment-submit">댓글 등록</button>
           </form>
+          `
+              : `<p class="board-comment-login-hint">${BOARD_LOGIN_REQUIRED_MESSAGE}</p>`
+          }
         </div>
       </section>
     </article>
@@ -890,27 +996,17 @@ function createBoardPostCard(postId, post, currentUid, isAdminUser) {
 
 function getBoardFormValues(formEl, isAdminUser) {
   const title = formEl.elements.title.value.trim();
-  const author = formEl.elements.author.value.trim();
   const content = formEl.elements.content.value.trim();
   const isNotice =
     isAdminUser && formEl.elements.isNotice
       ? formEl.elements.isNotice.checked
       : false;
 
-  return { title, author, content, isNotice };
+  return { title, content, isNotice };
 }
 
 function isBoardFormValid(values) {
-  return values.title !== "" && values.author !== "" && values.content !== "";
-}
-
-async function ensureAnonymousAuth(auth) {
-  if (auth.currentUser) {
-    return auth.currentUser;
-  }
-
-  const result = await auth.signInAnonymously();
-  return result.user;
+  return values.title !== "" && values.content !== "";
 }
 
 function setBoardPostStatus(cardEl, message, visible) {
@@ -970,10 +1066,9 @@ function setBoardCommentsStatus(cardEl, message, visible) {
 }
 
 function getBoardCommentFormValues(formEl) {
-  const author = formEl.elements.author.value.trim();
   const content = formEl.elements.content.value.trim();
 
-  return { author, content };
+  return { content };
 }
 
 function createBoardCommentItem(
@@ -981,9 +1076,12 @@ function createBoardCommentItem(
   commentId,
   comment,
   currentUid,
-  isAdminUser
+  isAdminUser,
+  isLoggedIn
 ) {
-  const isOwner = Boolean(comment.uid && comment.uid === currentUid);
+  const isOwner = Boolean(
+    isLoggedIn && comment.uid && comment.uid === currentUid
+  );
   const canDelete = isOwner || isAdminUser;
   const deleteBtn = canDelete
     ? `<button type="button" class="board-comment-delete" data-action="delete-comment" data-post-id="${postId}" data-comment-id="${commentId}">삭제</button>`
@@ -992,7 +1090,7 @@ function createBoardCommentItem(
   return `
     <li class="board-comment-item" data-comment-id="${commentId}">
       <p class="board-comment-meta">
-        ${escapeHtml(comment.author || "")} · ${formatBoardDate(comment.createdAt)}
+        ${escapeHtml(getBoardDisplayAuthor(comment))} · ${formatBoardDate(comment.createdAt)}
       </p>
       <p class="board-comment-content">${escapeHtml(comment.content || "")}</p>
       ${deleteBtn}
@@ -1005,7 +1103,8 @@ function renderBoardCommentsList(
   comments,
   postId,
   currentUid,
-  isAdminUser
+  isAdminUser,
+  isLoggedIn
 ) {
   const listEl = cardEl.querySelector(".board-comments-list");
   if (!listEl) {
@@ -1024,13 +1123,21 @@ function renderBoardCommentsList(
         item.id,
         item.data,
         currentUid,
-        isAdminUser
+        isAdminUser,
+        isLoggedIn
       )
     )
     .join("");
 }
 
-async function loadPostComments(db, postId, cardEl, currentUid, isAdminUser) {
+async function loadPostComments(
+  db,
+  postId,
+  cardEl,
+  currentUid,
+  isAdminUser,
+  isLoggedIn
+) {
   const listEl = cardEl.querySelector(".board-comments-list");
   if (!listEl) {
     return;
@@ -1053,7 +1160,14 @@ async function loadPostComments(db, postId, cardEl, currentUid, isAdminUser) {
       data: doc.data(),
     }));
 
-    renderBoardCommentsList(cardEl, comments, postId, currentUid, isAdminUser);
+    renderBoardCommentsList(
+      cardEl,
+      comments,
+      postId,
+      currentUid,
+      isAdminUser,
+      isLoggedIn
+    );
     setBoardCommentsStatus(cardEl, "", false);
     cardEl.dataset.commentsLoaded = "true";
   } catch (error) {
@@ -1063,13 +1177,14 @@ async function loadPostComments(db, postId, cardEl, currentUid, isAdminUser) {
   }
 }
 
-async function saveBoardComment(db, postId, values, uid) {
+async function saveBoardComment(db, postId, values, uid, authorNickname) {
   await db
     .collection(BOARD_POSTS_COLLECTION)
     .doc(postId)
     .collection("comments")
     .add({
-      author: values.author,
+      author: authorNickname,
+      authorNickname,
       content: values.content,
       uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1183,7 +1298,7 @@ function renderBoardPagination() {
   paginationEl.classList.remove("is-hidden");
 }
 
-function renderBoardPostsPage(currentUid, isAdminUser) {
+function renderBoardPostsPage(currentUid, isAdminUser, isLoggedIn) {
   const listEl = document.getElementById("board-posts-list");
   const statusEl = document.getElementById("board-list-status");
   const paginationEl = document.getElementById("board-pagination");
@@ -1215,14 +1330,26 @@ function renderBoardPostsPage(currentUid, isAdminUser) {
   const noticeHtml = hasNotices
     ? `<div class="board-notices-group" aria-label="공지글">${boardNoticePostsCache
         .map((post) =>
-          createBoardPostCard(post.id, post.data, currentUid, isAdminUser)
+          createBoardPostCard(
+            post.id,
+            post.data,
+            currentUid,
+            isAdminUser,
+            isLoggedIn
+          )
         )
         .join("")}</div>`
     : "";
   const regularHtml = pageRegularPosts.length
     ? `<div class="board-regular-group">${pageRegularPosts
         .map((post) =>
-          createBoardPostCard(post.id, post.data, currentUid, isAdminUser)
+          createBoardPostCard(
+            post.id,
+            post.data,
+            currentUid,
+            isAdminUser,
+            isLoggedIn
+          )
         )
         .join("")}</div>`
     : "";
@@ -1232,7 +1359,13 @@ function renderBoardPostsPage(currentUid, isAdminUser) {
   setBoardStatus(statusEl, "hidden", "");
 }
 
-async function loadBoardPosts(db, currentUid, isAdminUser, page = 1) {
+async function loadBoardPosts(
+  db,
+  currentUid,
+  isAdminUser,
+  isLoggedIn,
+  page = 1
+) {
   const listEl = document.getElementById("board-posts-list");
   const statusEl = document.getElementById("board-list-status");
   const paginationEl = document.getElementById("board-pagination");
@@ -1253,7 +1386,7 @@ async function loadBoardPosts(db, currentUid, isAdminUser, page = 1) {
     boardNoticePostsCache = noticePosts;
     boardRegularPostsCache = regularPosts;
     boardCurrentPage = page;
-    renderBoardPostsPage(currentUid, isAdminUser);
+    renderBoardPostsPage(currentUid, isAdminUser, isLoggedIn);
   } catch (error) {
     console.error("[board] 게시글 불러오기 실패:", error);
     boardNoticePostsCache = [];
@@ -1284,9 +1417,9 @@ function bindBoardPagination(getBoardContext) {
       return;
     }
 
-    const { currentUid, isAdminUser } = getBoardContext();
+    const { currentUid, isAdminUser, isLoggedIn } = getBoardContext();
     boardCurrentPage = page;
-    renderBoardPostsPage(currentUid, isAdminUser);
+    renderBoardPostsPage(currentUid, isAdminUser, isLoggedIn);
 
     const listEl = document.getElementById("board-posts-list");
     if (listEl) {
@@ -1295,10 +1428,11 @@ function bindBoardPagination(getBoardContext) {
   });
 }
 
-async function saveBoardPost(db, values, uid) {
+async function saveBoardPost(db, values, uid, authorNickname) {
   await db.collection(BOARD_POSTS_COLLECTION).add({
     title: values.title,
-    author: values.author,
+    author: authorNickname,
+    authorNickname,
     content: values.content,
     uid,
     isNotice: Boolean(values.isNotice),
@@ -1324,7 +1458,7 @@ function bindBoardPostActions(db, getBoardContext) {
   }
 
   listEl.addEventListener("click", async (event) => {
-    const { currentUid, isAdminUser } = getBoardContext();
+    const { currentUid, isAdminUser, isLoggedIn } = getBoardContext();
     const actionBtn = event.target.closest("[data-action]");
     if (!actionBtn) {
       return;
@@ -1348,7 +1482,14 @@ function bindBoardPostActions(db, getBoardContext) {
         actionBtn.textContent = "댓글 숨기기";
 
         if (cardEl.dataset.commentsLoaded !== "true") {
-          await loadPostComments(db, postId, cardEl, currentUid, isAdminUser);
+          await loadPostComments(
+            db,
+            postId,
+            cardEl,
+            currentUid,
+            isAdminUser,
+            isLoggedIn
+          );
         }
       } else {
         panelEl.classList.add("is-hidden");
@@ -1376,7 +1517,14 @@ function bindBoardPostActions(db, getBoardContext) {
 
       try {
         await deleteBoardComment(db, postId, commentId);
-        await loadPostComments(db, postId, cardEl, currentUid, isAdminUser);
+        await loadPostComments(
+          db,
+          postId,
+          cardEl,
+          currentUid,
+          isAdminUser,
+          isLoggedIn
+        );
       } catch (error) {
         console.error("[board] 댓글 삭제 실패:", error);
         setBoardCommentsStatus(cardEl, BOARD_COMMENT_DELETE_ERROR_MESSAGE, true);
@@ -1416,7 +1564,13 @@ function bindBoardPostActions(db, getBoardContext) {
       try {
         await deleteBoardPost(db, postId);
         setBoardPostStatus(cardEl, BOARD_DELETE_SUCCESS_MESSAGE, true);
-        await loadBoardPosts(db, currentUid, isAdminUser, boardCurrentPage);
+        await loadBoardPosts(
+          db,
+          currentUid,
+          isAdminUser,
+          isLoggedIn,
+          boardCurrentPage
+        );
       } catch (error) {
         console.error("[board] 글 삭제 실패:", error);
         setBoardPostStatus(cardEl, BOARD_DELETE_ERROR_MESSAGE, true);
@@ -1426,7 +1580,7 @@ function bindBoardPostActions(db, getBoardContext) {
   });
 
   listEl.addEventListener("submit", async (event) => {
-    const { currentUid, isAdminUser } = getBoardContext();
+    const { currentUid, isAdminUser, isLoggedIn, nickname } = getBoardContext();
     const commentFormEl = event.target.closest(".board-comment-form");
 
     if (commentFormEl) {
@@ -1436,14 +1590,20 @@ function bindBoardPostActions(db, getBoardContext) {
       const postId = cardEl?.dataset.postId;
       const submitBtn = commentFormEl.querySelector(".board-comment-submit");
 
-      if (!cardEl || !postId || !currentUid) {
+      if (!cardEl || !postId || !currentUid || !isLoggedIn) {
+        setBoardCommentsStatus(cardEl, BOARD_LOGIN_REQUIRED_MESSAGE, true);
         return;
       }
 
       const values = getBoardCommentFormValues(commentFormEl);
 
-      if (!values.author || !values.content) {
+      if (!values.content) {
         setBoardCommentsStatus(cardEl, BOARD_COMMENT_VALIDATION_MESSAGE, true);
+        return;
+      }
+
+      if (!nickname) {
+        setBoardCommentsStatus(cardEl, BOARD_NICKNAME_VALIDATION_MESSAGE, true);
         return;
       }
 
@@ -1452,9 +1612,16 @@ function bindBoardPostActions(db, getBoardContext) {
       }
 
       try {
-        await saveBoardComment(db, postId, values, currentUid);
+        await saveBoardComment(db, postId, values, currentUid, nickname);
         commentFormEl.reset();
-        await loadPostComments(db, postId, cardEl, currentUid, isAdminUser);
+        await loadPostComments(
+          db,
+          postId,
+          cardEl,
+          currentUid,
+          isAdminUser,
+          isLoggedIn
+        );
         setBoardCommentsStatus(cardEl, "댓글이 등록되었습니다.", true);
         setTimeout(() => setBoardCommentsStatus(cardEl, "", false), 2000);
       } catch (error) {
@@ -1494,7 +1661,13 @@ function bindBoardPostActions(db, getBoardContext) {
     try {
       await updateBoardPost(db, postId, values);
       setBoardPostStatus(cardEl, BOARD_UPDATE_SUCCESS_MESSAGE, true);
-      await loadBoardPosts(db, currentUid, isAdminUser, boardCurrentPage);
+      await loadBoardPosts(
+        db,
+        currentUid,
+        isAdminUser,
+        isLoggedIn,
+        boardCurrentPage
+      );
     } catch (error) {
       console.error("[board] 글 수정 실패:", error);
       setBoardPostStatus(cardEl, BOARD_UPDATE_ERROR_MESSAGE, true);
@@ -1522,68 +1695,140 @@ function initBoardPage() {
   const formStatusEl = document.getElementById("board-form-status");
   const listStatusEl = document.getElementById("board-list-status");
   const submitBtn = formEl.querySelector(".board-submit-btn");
+  const googleLoginBtn = document.getElementById("board-google-login");
+  const logoutBtn = document.getElementById("board-logout");
+  const nicknameFormEl = document.getElementById("board-nickname-form");
 
-  (async () => {
-    let currentUid = null;
-    let isAdminUser = false;
-    let uidLogged = false;
+  let currentUid = null;
+  let isAdminUser = false;
 
-    const getBoardContext = () => ({
-      currentUid,
-      isAdminUser,
-    });
+  const getBoardContext = () => ({
+    currentUid,
+    isAdminUser,
+    isLoggedIn: Boolean(currentUid),
+    nickname: getBoardNickname(),
+  });
 
-    try {
-      const user = await ensureAnonymousAuth(auth);
+  async function handleAuthStateChange(user) {
+    boardAuthUser = user;
+
+    if (user) {
+      console.log("[board] 현재 Google uid:", user.uid);
       currentUid = user.uid;
+      isAdminUser = isBoardAdmin(user.uid);
 
-      if (!uidLogged) {
-        console.log("[board] 현재 uid:", currentUid);
-        uidLogged = true;
+      try {
+        boardUserProfile = await ensureUserProfile(db, user);
+      } catch (error) {
+        console.error("[board] 사용자 프로필 불러오기 실패:", error);
+        boardUserProfile = null;
+      }
+    } else {
+      currentUid = null;
+      isAdminUser = false;
+      boardUserProfile = null;
+    }
+
+    updateBoardAuthUi();
+    updateBoardAdminUi(currentUid);
+    renderBoardPostsPage(currentUid, isAdminUser, Boolean(currentUid));
+  }
+
+  bindBoardPostActions(db, getBoardContext);
+  bindBoardPagination(getBoardContext);
+
+  loadBoardPosts(db, null, false, false, 1);
+
+  auth.onAuthStateChanged(handleAuthStateChange);
+
+  if (googleLoginBtn) {
+    googleLoginBtn.addEventListener("click", async () => {
+      try {
+        await signInWithGoogle(auth);
+      } catch (error) {
+        console.error("[board] Google 로그인 실패:", error);
+        setBoardStatus(listStatusEl, "error", BOARD_GOOGLE_LOGIN_ERROR_MESSAGE);
+      }
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOutFromBoard(auth);
+      } catch (error) {
+        console.error("[board] 로그아웃 실패:", error);
+      }
+    });
+  }
+
+  if (nicknameFormEl) {
+    nicknameFormEl.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (!currentUid) {
+        setBoardNicknameStatus(BOARD_LOGIN_REQUIRED_MESSAGE, true);
+        return;
       }
 
-      isAdminUser = isBoardAdmin(currentUid);
-      updateBoardAdminUi(currentUid);
-      bindBoardPostActions(db, getBoardContext);
-      bindBoardPagination(getBoardContext);
-      await loadBoardPosts(db, currentUid, isAdminUser, 1);
-    } catch {
-      setBoardStatus(listStatusEl, "error", BOARD_AUTH_ERROR_MESSAGE);
+      const nicknameInputEl = document.getElementById("board-nickname-input");
+      const nickname = nicknameInputEl?.value.trim() || "";
+
+      if (!nickname) {
+        setBoardNicknameStatus(BOARD_NICKNAME_VALIDATION_MESSAGE, true);
+        return;
+      }
+
+      try {
+        await updateUserNickname(db, currentUid, nickname);
+        boardUserProfile = { ...boardUserProfile, nickname };
+        updateBoardAuthUi();
+        setBoardNicknameStatus(BOARD_NICKNAME_SAVE_SUCCESS_MESSAGE, true);
+        setTimeout(() => setBoardNicknameStatus("", false), 2000);
+      } catch (error) {
+        console.error("[board] 닉네임 저장 실패:", error);
+        setBoardNicknameStatus(BOARD_NICKNAME_SAVE_ERROR_MESSAGE, true);
+      }
+    });
+  }
+
+  formEl.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!currentUid) {
+      setBoardStatus(formStatusEl, "error", BOARD_LOGIN_REQUIRED_MESSAGE);
       return;
     }
 
-    formEl.addEventListener("submit", async (event) => {
-      event.preventDefault();
+    const values = getBoardFormValues(formEl, isAdminUser);
+    const nickname = getBoardNickname();
 
-      const values = getBoardFormValues(formEl, isAdminUser);
+    if (!isBoardFormValid(values)) {
+      setBoardStatus(formStatusEl, "error", BOARD_VALIDATION_MESSAGE);
+      return;
+    }
 
-      if (!isBoardFormValid(values)) {
-        setBoardStatus(formStatusEl, "error", BOARD_VALIDATION_MESSAGE);
-        return;
-      }
+    if (!nickname) {
+      setBoardStatus(formStatusEl, "error", BOARD_NICKNAME_VALIDATION_MESSAGE);
+      return;
+    }
 
-      if (!currentUid) {
-        setBoardStatus(formStatusEl, "error", BOARD_AUTH_ERROR_MESSAGE);
-        return;
-      }
+    submitBtn.disabled = true;
+    setBoardStatus(formStatusEl, "saving", BOARD_SAVING_MESSAGE);
 
-      submitBtn.disabled = true;
-      setBoardStatus(formStatusEl, "saving", BOARD_SAVING_MESSAGE);
-
-      try {
-        await saveBoardPost(db, values, currentUid);
-        setBoardStatus(formStatusEl, "success", BOARD_SAVE_SUCCESS_MESSAGE);
-        formEl.reset();
-        updateBoardAdminUi(currentUid);
-        await loadBoardPosts(db, currentUid, isAdminUser, 1);
-      } catch (error) {
-        console.error("[board] 글 작성 실패:", error);
-        setBoardStatus(formStatusEl, "error", BOARD_SAVE_ERROR_MESSAGE);
-      } finally {
-        submitBtn.disabled = false;
-      }
-    });
-  })();
+    try {
+      await saveBoardPost(db, values, currentUid, nickname);
+      setBoardStatus(formStatusEl, "success", BOARD_SAVE_SUCCESS_MESSAGE);
+      formEl.reset();
+      updateBoardAdminUi(currentUid);
+      await loadBoardPosts(db, currentUid, isAdminUser, true, 1);
+    } catch (error) {
+      console.error("[board] 글 작성 실패:", error);
+      setBoardStatus(formStatusEl, "error", BOARD_SAVE_ERROR_MESSAGE);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
 }
 
 if (isBoardPage()) {
