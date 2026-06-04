@@ -1337,9 +1337,58 @@ async function updateUserNickname(db, user, nickname) {
   await userRef.set(profileData, { merge: true });
 }
 
+function createGoogleAuthProvider() {
+  return new firebase.auth.GoogleAuthProvider();
+}
+
+function formatBoardGoogleLoginError(error) {
+  const code = error?.code || "unknown";
+  const message = error?.message ? `\n${error.message}` : "";
+  return `로그인 실패: ${code}${message}`;
+}
+
+function ensureBoardLoginErrorEl() {
+  let el = document.getElementById("board-login-error");
+
+  if (el) {
+    return el;
+  }
+
+  const authBarEl = document.getElementById("board-auth");
+  if (!authBarEl) {
+    return null;
+  }
+
+  el = document.createElement("p");
+  el.id = "board-login-error";
+  el.className = "board-auth-status--inline is-hidden";
+  el.setAttribute("role", "alert");
+  el.setAttribute("aria-live", "polite");
+  el.style.whiteSpace = "pre-wrap";
+  el.style.overflowWrap = "anywhere";
+  authBarEl.appendChild(el);
+  return el;
+}
+
+function setBoardLoginError(error, visible) {
+  const el = ensureBoardLoginErrorEl();
+  if (!el) {
+    return;
+  }
+
+  if (!visible || !error) {
+    el.textContent = "";
+    el.classList.add("is-hidden");
+    return;
+  }
+
+  el.textContent = formatBoardGoogleLoginError(error);
+  el.classList.remove("is-hidden");
+}
+
 async function signInWithGoogle(auth) {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  await auth.signInWithPopup(provider);
+  const provider = createGoogleAuthProvider();
+  return auth.signInWithPopup(provider);
 }
 
 async function signOutFromBoard(auth) {
@@ -2410,6 +2459,8 @@ function setupBoardAuthListeners(db, auth, listStatusEl, onAuthReady) {
   const logoutBtn = document.getElementById("board-logout");
   const nicknameFormEl = document.getElementById("board-nickname-form");
 
+  ensureBoardLoginErrorEl();
+
   let currentUid = null;
   let isAdminUser = false;
 
@@ -2425,6 +2476,7 @@ function setupBoardAuthListeners(db, auth, listStatusEl, onAuthReady) {
 
     if (user) {
       currentUid = user.uid;
+      setBoardLoginError(null, false);
 
       try {
         boardUserProfile = await ensureUserProfile(db, user);
@@ -2448,12 +2500,19 @@ function setupBoardAuthListeners(db, auth, listStatusEl, onAuthReady) {
 
   if (googleLoginBtn) {
     googleLoginBtn.addEventListener("click", async () => {
+      setBoardLoginError(null, false);
+
       try {
         await signInWithGoogle(auth);
       } catch (error) {
         console.error("[board] Google 로그인 실패:", error);
+        setBoardLoginError(error, true);
         if (listStatusEl) {
-          setBoardStatus(listStatusEl, "error", BOARD_GOOGLE_LOGIN_ERROR_MESSAGE);
+          setBoardStatus(
+            listStatusEl,
+            "error",
+            formatBoardGoogleLoginError(error)
+          );
         }
       }
     });
