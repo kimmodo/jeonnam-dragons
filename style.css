@@ -64,10 +64,10 @@ img {
   max-width: 100%;
   margin: 0;
   padding: var(--space-md) var(--space-sm) 4px;
-  font-size: clamp(1.6rem, 9vw, 3.5rem);
-  font-weight: bold;
+  font-size: clamp(2.2rem, 11vw, 4rem);
+  font-weight: 900;
   letter-spacing: 0.06em;
-  line-height: 1.15;
+  line-height: 1.05;
   color: var(--color-text);
   text-decoration: none;
   word-break: keep-all;
