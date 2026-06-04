@@ -1337,6 +1337,39 @@ async function updateUserNickname(db, user, nickname) {
   await userRef.set(profileData, { merge: true });
 }
 
+function enforcePopupOnlyGoogleAuth(auth) {
+  if (!auth || auth.__boardPopupOnlyAuth) {
+    return auth;
+  }
+
+  if (typeof auth.signInWithRedirect === "function") {
+    auth.signInWithRedirect = () =>
+      Promise.reject({
+        code: "auth/redirect-disabled",
+        message: "Redirect 로그인은 사용하지 않습니다. 팝업 로그인만 지원합니다.",
+      });
+  }
+
+  if (typeof auth.getRedirectResult === "function") {
+    auth.getRedirectResult = () => Promise.resolve(null);
+  }
+
+  auth.__boardPopupOnlyAuth = true;
+  return auth;
+}
+
+function getBoardFirebaseAuth() {
+  if (typeof firebase === "undefined") {
+    return null;
+  }
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+  }
+
+  return enforcePopupOnlyGoogleAuth(firebase.auth());
+}
+
 function createGoogleAuthProvider() {
   return new firebase.auth.GoogleAuthProvider();
 }
@@ -1387,6 +1420,7 @@ function setBoardLoginError(error, visible) {
 }
 
 async function signInWithGoogle(auth) {
+  enforcePopupOnlyGoogleAuth(auth);
   const provider = createGoogleAuthProvider();
   return auth.signInWithPopup(provider);
 }
@@ -2501,6 +2535,7 @@ function setupBoardAuthListeners(db, auth, listStatusEl, onAuthReady) {
   if (googleLoginBtn) {
     googleLoginBtn.addEventListener("click", async () => {
       setBoardLoginError(null, false);
+      googleLoginBtn.disabled = true;
 
       try {
         await signInWithGoogle(auth);
@@ -2514,6 +2549,8 @@ function setupBoardAuthListeners(db, auth, listStatusEl, onAuthReady) {
             formatBoardGoogleLoginError(error)
           );
         }
+      } finally {
+        googleLoginBtn.disabled = false;
       }
     });
   }
@@ -2576,11 +2613,11 @@ function initIndexAuthPage() {
     return;
   }
 
-  if (!firebase.apps.length) {
-    firebase.initializeApp(FIREBASE_CONFIG);
+  const auth = getBoardFirebaseAuth();
+  if (!auth) {
+    return;
   }
 
-  const auth = firebase.auth();
   const db = firebase.firestore();
 
   setupBoardAuthListeners(db, auth, null, async () => {});
@@ -2657,11 +2694,11 @@ function initPostDetailPage() {
     return;
   }
 
-  if (!firebase.apps.length) {
-    firebase.initializeApp(FIREBASE_CONFIG);
+  const auth = getBoardFirebaseAuth();
+  if (!auth) {
+    return;
   }
 
-  const auth = firebase.auth();
   const db = firebase.firestore();
   const postId = getPostDetailIdFromUrl();
   const statusEl = document.getElementById("post-detail-status");
@@ -2721,11 +2758,11 @@ function initBoardPage() {
     return;
   }
 
-  if (!firebase.apps.length) {
-    firebase.initializeApp(FIREBASE_CONFIG);
+  const auth = getBoardFirebaseAuth();
+  if (!auth) {
+    return;
   }
 
-  const auth = firebase.auth();
   const db = firebase.firestore();
   const formEl = document.getElementById("board-form");
   const formStatusEl = document.getElementById("board-form-status");
