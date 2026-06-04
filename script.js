@@ -744,7 +744,7 @@ function escapeHtml(text) {
 const galleryItems = [
   {
     image: "./images/gallery/modo.png",
-    title: "김모도",
+    title: "신도도",
     description: "광주 경기 응원 현장",
     date: "2026.03.15",
   },
