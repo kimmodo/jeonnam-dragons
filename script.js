@@ -672,6 +672,11 @@ if (isGalleryPage()) {
 
 // --- board.html 전용: Firestore 자유게시판 ---
 
+// 관리자 uid를 아래 배열에 추가하세요. (콘솔에 출력된 uid 확인)
+const ADMIN_UIDS = [
+  // "여기에_관리자_uid_입력",
+];
+
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCLVU8ZDaGSdmOTqqANqYH9_O4PCbgnoFY",
   authDomain: "jeonnam-fan.firebaseapp.com",
@@ -683,6 +688,7 @@ const FIREBASE_CONFIG = {
 
 const BOARD_POSTS_COLLECTION = "posts";
 const BOARD_POSTS_LIMIT = 20;
+const BOARD_POSTS_FETCH_LIMIT = 40;
 const BOARD_LOADING_MESSAGE = "게시글을 불러오는 중...";
 const BOARD_LOAD_ERROR_MESSAGE =
   "게시글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
@@ -706,6 +712,29 @@ const BOARD_EDIT_VALIDATION_MESSAGE = "제목과 내용을 모두 입력해주�
 
 function isBoardPage() {
   return document.getElementById("board-form") !== null;
+}
+
+function isBoardAdmin(uid) {
+  return Boolean(uid && ADMIN_UIDS.includes(uid));
+}
+
+function updateBoardAdminUi(currentUid) {
+  const noticeFieldEl = document.getElementById("board-notice-field");
+  const noticeCheckboxEl = document.getElementById("board-is-notice");
+
+  if (!noticeFieldEl) {
+    return;
+  }
+
+  if (isBoardAdmin(currentUid)) {
+    noticeFieldEl.classList.remove("is-hidden");
+    return;
+  }
+
+  noticeFieldEl.classList.add("is-hidden");
+  if (noticeCheckboxEl) {
+    noticeCheckboxEl.checked = false;
+  }
 }
 
 function setBoardStatus(statusEl, state, message) {
@@ -738,15 +767,30 @@ function formatBoardDate(value) {
   });
 }
 
-function createBoardPostCard(postId, post, currentUid) {
+function createBoardPostCard(postId, post, currentUid, isAdminUser) {
   const isOwner = Boolean(post.uid && post.uid === currentUid);
-  const ownerButtons = isOwner
-    ? `
-      <div class="board-post-actions">
-        <button type="button" class="board-action-btn" data-action="edit" data-id="${postId}">수정</button>
-        <button type="button" class="board-action-btn board-action-btn--danger" data-action="delete" data-id="${postId}">삭제</button>
-      </div>
-    `
+  const isNotice = post.isNotice === true;
+  const canEdit = isOwner;
+  const canDelete = isOwner || isAdminUser;
+  const noticeClass = isNotice ? " board-post-card--notice" : "";
+  const noticeBadge = isNotice
+    ? '<span class="board-notice-badge">공지</span>'
+    : "";
+
+  let actionButtons = "";
+  if (canEdit && canDelete) {
+    actionButtons = `
+      <button type="button" class="board-action-btn" data-action="edit" data-id="${postId}">수정</button>
+      <button type="button" class="board-action-btn board-action-btn--danger" data-action="delete" data-id="${postId}">삭제</button>
+    `;
+  } else if (canDelete) {
+    actionButtons = `
+      <button type="button" class="board-action-btn board-action-btn--danger" data-action="delete" data-id="${postId}">삭제</button>
+    `;
+  }
+
+  const postActions = actionButtons
+    ? `<div class="board-post-actions">${actionButtons}</div>`
     : "";
   const editForm = isOwner
     ? `
@@ -779,14 +823,15 @@ function createBoardPostCard(postId, post, currentUid) {
     : "";
 
   return `
-    <article class="board-post-card" data-post-id="${postId}">
+    <article class="board-post-card${noticeClass}" data-post-id="${postId}">
       <div class="board-post-view">
+        ${noticeBadge}
         <h3 class="board-post-title">${escapeHtml(post.title || "")}</h3>
         <p class="board-post-meta">
           ${escapeHtml(post.author || "")} · ${formatBoardDate(post.createdAt)}
         </p>
         <p class="board-post-content">${escapeHtml(post.content || "")}</p>
-        ${ownerButtons}
+        ${postActions}
       </div>
       ${editForm}
       <p class="board-post-status is-hidden" role="status" aria-live="polite"></p>
@@ -794,12 +839,16 @@ function createBoardPostCard(postId, post, currentUid) {
   `;
 }
 
-function getBoardFormValues(formEl) {
+function getBoardFormValues(formEl, isAdminUser) {
   const title = formEl.elements.title.value.trim();
   const author = formEl.elements.author.value.trim();
   const content = formEl.elements.content.value.trim();
+  const isNotice =
+    isAdminUser && formEl.elements.isNotice
+      ? formEl.elements.isNotice.checked
+      : false;
 
-  return { title, author, content };
+  return { title, author, content, isNotice };
 }
 
 function isBoardFormValid(values) {
@@ -861,7 +910,7 @@ function getBoardEditValues(editFormEl) {
   return { title, content };
 }
 
-async function loadBoardPosts(db, currentUid) {
+async function loadBoardPosts(db, currentUid, isAdminUser) {
   const listEl = document.getElementById("board-posts-list");
   const statusEl = document.getElementById("board-list-status");
 
@@ -873,19 +922,33 @@ async function loadBoardPosts(db, currentUid) {
   listEl.innerHTML = "";
 
   try {
-    const snapshot = await db
-      .collection(BOARD_POSTS_COLLECTION)
-      .orderBy("createdAt", "desc")
-      .limit(BOARD_POSTS_LIMIT)
-      .get();
+    const [noticeSnapshot, recentSnapshot] = await Promise.all([
+      db
+        .collection(BOARD_POSTS_COLLECTION)
+        .where("isNotice", "==", true)
+        .orderBy("createdAt", "desc")
+        .get(),
+      db
+        .collection(BOARD_POSTS_COLLECTION)
+        .orderBy("createdAt", "desc")
+        .limit(BOARD_POSTS_FETCH_LIMIT)
+        .get(),
+    ]);
 
-    if (snapshot.empty) {
+    const regularDocs = recentSnapshot.docs
+      .filter((doc) => doc.data().isNotice !== true)
+      .slice(0, BOARD_POSTS_LIMIT);
+    const allDocs = [...noticeSnapshot.docs, ...regularDocs];
+
+    if (allDocs.length === 0) {
       setBoardStatus(statusEl, "empty", BOARD_EMPTY_MESSAGE);
       return;
     }
 
-    listEl.innerHTML = snapshot.docs
-      .map((doc) => createBoardPostCard(doc.id, doc.data(), currentUid))
+    listEl.innerHTML = allDocs
+      .map((doc) =>
+        createBoardPostCard(doc.id, doc.data(), currentUid, isAdminUser)
+      )
       .join("");
     setBoardStatus(statusEl, "hidden", "");
   } catch {
@@ -900,6 +963,7 @@ async function saveBoardPost(db, values, uid) {
     author: values.author,
     content: values.content,
     uid,
+    isNotice: values.isNotice === true,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
 }
@@ -915,13 +979,14 @@ async function deleteBoardPost(db, postId) {
   await db.collection(BOARD_POSTS_COLLECTION).doc(postId).delete();
 }
 
-function bindBoardPostActions(db, currentUid) {
+function bindBoardPostActions(db, getBoardContext) {
   const listEl = document.getElementById("board-posts-list");
   if (!listEl) {
     return;
   }
 
   listEl.addEventListener("click", async (event) => {
+    const { currentUid, isAdminUser } = getBoardContext();
     const actionBtn = event.target.closest("[data-action]");
     if (!actionBtn) {
       return;
@@ -958,7 +1023,7 @@ function bindBoardPostActions(db, currentUid) {
       try {
         await deleteBoardPost(db, postId);
         setBoardPostStatus(cardEl, BOARD_DELETE_SUCCESS_MESSAGE, true);
-        await loadBoardPosts(db, currentUid);
+        await loadBoardPosts(db, currentUid, isAdminUser);
       } catch {
         setBoardPostStatus(cardEl, BOARD_DELETE_ERROR_MESSAGE, true);
         actionBtn.disabled = false;
@@ -967,6 +1032,7 @@ function bindBoardPostActions(db, currentUid) {
   });
 
   listEl.addEventListener("submit", async (event) => {
+    const { currentUid, isAdminUser } = getBoardContext();
     const editFormEl = event.target.closest(".board-edit-form");
     if (!editFormEl) {
       return;
@@ -992,7 +1058,7 @@ function bindBoardPostActions(db, currentUid) {
     try {
       await updateBoardPost(db, postId, values);
       setBoardPostStatus(cardEl, BOARD_UPDATE_SUCCESS_MESSAGE, true);
-      await loadBoardPosts(db, currentUid);
+      await loadBoardPosts(db, currentUid, isAdminUser);
     } catch {
       setBoardPostStatus(cardEl, BOARD_UPDATE_ERROR_MESSAGE, true);
       if (saveBtn) {
@@ -1022,12 +1088,27 @@ function initBoardPage() {
 
   (async () => {
     let currentUid = null;
+    let isAdminUser = false;
+    let uidLogged = false;
+
+    const getBoardContext = () => ({
+      currentUid,
+      isAdminUser,
+    });
 
     try {
       const user = await ensureAnonymousAuth(auth);
       currentUid = user.uid;
-      bindBoardPostActions(db, currentUid);
-      await loadBoardPosts(db, currentUid);
+
+      if (!uidLogged) {
+        console.log("[board] 현재 uid:", currentUid);
+        uidLogged = true;
+      }
+
+      isAdminUser = isBoardAdmin(currentUid);
+      updateBoardAdminUi(currentUid);
+      bindBoardPostActions(db, getBoardContext);
+      await loadBoardPosts(db, currentUid, isAdminUser);
     } catch {
       setBoardStatus(listStatusEl, "error", BOARD_AUTH_ERROR_MESSAGE);
       return;
@@ -1036,7 +1117,7 @@ function initBoardPage() {
     formEl.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const values = getBoardFormValues(formEl);
+      const values = getBoardFormValues(formEl, isAdminUser);
 
       if (!isBoardFormValid(values)) {
         setBoardStatus(formStatusEl, "error", BOARD_VALIDATION_MESSAGE);
@@ -1055,7 +1136,8 @@ function initBoardPage() {
         await saveBoardPost(db, values, currentUid);
         setBoardStatus(formStatusEl, "success", BOARD_SAVE_SUCCESS_MESSAGE);
         formEl.reset();
-        await loadBoardPosts(db, currentUid);
+        updateBoardAdminUi(currentUid);
+        await loadBoardPosts(db, currentUid, isAdminUser);
       } catch {
         setBoardStatus(formStatusEl, "error", BOARD_SAVE_ERROR_MESSAGE);
       } finally {

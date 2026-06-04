@@ -629,6 +629,25 @@ body.gallery-modal-open {
   margin-top: var(--space-sm);
 }
 
+.board-notice-field.is-hidden {
+  display: none;
+}
+
+.board-notice-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.board-notice-label input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-text);
+}
+
 .board-status {
   margin-top: var(--space-sm);
   margin-bottom: var(--space-sm);
@@ -678,6 +697,23 @@ body.gallery-modal-open {
   border: 1px solid var(--color-border);
   border-radius: 10px;
   border-left: 3px solid var(--color-text);
+}
+
+.board-post-card--notice {
+  background: var(--color-panel-highlight);
+  border: 2px solid var(--color-text);
+  border-left: 4px solid var(--color-text);
+}
+
+.board-notice-badge {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  background: var(--color-text);
+  color: var(--color-surface);
+  border-radius: 6px;
 }
 
 .board-post-title {
