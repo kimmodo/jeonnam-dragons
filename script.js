@@ -524,23 +524,31 @@ function escapeHtml(text) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
-// images/gallery 폴더에 사진을 넣고 아래 배열만 수정하세요.
-const GALLERY_PHOTOS = [
+// images/gallery 폴더에 사진을 넣고 galleryItems 배열만 수정하세요.
+const galleryItems = [
   {
-    src: "./images/gallery/photo1.jpg",
+    image: "./images/gallery/photo1.jpg",
     title: "경기 스냅 1",
+    description: "광주 경기 응원 현장",
+    date: "2026.03.15",
   },
   {
-    src: "./images/gallery/photo2.jpg",
+    image: "./images/gallery/photo2.jpg",
     title: "경기 스냅 2",
+    description: "원정 응원 스냅",
+    date: "2026.03.22",
   },
   {
-    src: "./images/gallery/photo3.jpg",
+    image: "./images/gallery/photo3.jpg",
     title: "응원 현장",
+    description: "서포터즈 응원 모습",
+    date: "2026.04.05",
   },
   {
-    src: "./images/gallery/photo4.jpg",
+    image: "./images/gallery/photo4.jpg",
     title: "팀 사진",
+    description: "시즌 오프닝 데이",
+    date: "2026.04.12",
   },
 ];
 
@@ -548,19 +556,31 @@ function isGalleryPage() {
   return document.getElementById("gallery-grid") !== null;
 }
 
-function createGalleryCard(photo, index) {
+function createGalleryCard(item, index) {
+  const title = item.title || "사진";
+  const description = item.description || "";
+  const date = item.date || "";
+
   return `
     <button type="button" class="gallery-card" data-index="${index}">
       <div class="gallery-image-wrap">
         <img
           class="gallery-image"
-          src="${photo.src}"
-          alt="${escapeHtml(photo.title)}"
+          src="${escapeHtml(item.image || "")}"
+          alt="${escapeHtml(title)}"
           loading="lazy"
         />
-        <span class="gallery-fallback">이미지 준비 중</span>
+        <span class="gallery-fallback">이미지를 불러올 수 없습니다</span>
       </div>
-      <p class="gallery-card-title">${escapeHtml(photo.title)}</p>
+      <div class="gallery-card-body">
+        <p class="gallery-card-title">${escapeHtml(title)}</p>
+        ${
+          description
+            ? `<p class="gallery-card-description">${escapeHtml(description)}</p>`
+            : ""
+        }
+        ${date ? `<p class="gallery-card-date">${escapeHtml(date)}</p>` : ""}
+      </div>
     </button>
   `;
 }
@@ -578,18 +598,71 @@ function bindGalleryImageFallbacks() {
   });
 }
 
-function openGalleryModal(photo) {
+function bindGalleryModalImageFallback(imageEl, fallbackEl) {
+  if (!imageEl) {
+    return;
+  }
+
+  imageEl.classList.remove("is-error");
+  imageEl.onload = () => {
+    if (imageEl.naturalWidth > 0 && fallbackEl) {
+      fallbackEl.classList.add("is-hidden");
+    }
+  };
+  imageEl.onerror = () => {
+    imageEl.classList.add("is-error");
+    imageEl.removeAttribute("src");
+    if (fallbackEl) {
+      fallbackEl.classList.remove("is-hidden");
+    }
+  };
+}
+
+function openGalleryModal(item) {
   const modalEl = document.getElementById("gallery-modal");
   const imageEl = document.getElementById("gallery-modal-image");
   const titleEl = document.getElementById("gallery-modal-title");
+  const descriptionEl = document.getElementById("gallery-modal-description");
+  const dateEl = document.getElementById("gallery-modal-date");
+  const imageFallbackEl = document.getElementById("gallery-modal-fallback");
 
   if (!modalEl || !imageEl || !titleEl) {
     return;
   }
 
-  imageEl.src = photo.src;
-  imageEl.alt = photo.title;
-  titleEl.textContent = photo.title;
+  const title = item.title || "사진";
+  const description = item.description || "";
+  const date = item.date || "";
+
+  imageEl.alt = title;
+
+  if (!item.image) {
+    imageEl.classList.add("is-error");
+    imageEl.removeAttribute("src");
+    if (imageFallbackEl) {
+      imageFallbackEl.classList.remove("is-hidden");
+    }
+  } else {
+    imageEl.classList.remove("is-error");
+    if (imageFallbackEl) {
+      imageFallbackEl.classList.add("is-hidden");
+    }
+    imageEl.src = item.image;
+    bindGalleryModalImageFallback(imageEl, imageFallbackEl);
+  }
+
+  titleEl.textContent = title;
+
+  if (descriptionEl) {
+    descriptionEl.textContent = description;
+    descriptionEl.classList.toggle("is-hidden", !description);
+  }
+
+  if (dateEl) {
+    dateEl.textContent = date;
+    dateEl.classList.toggle("is-hidden", !date);
+  }
+
   modalEl.classList.remove("is-hidden");
   modalEl.setAttribute("aria-hidden", "false");
   document.body.classList.add("gallery-modal-open");
@@ -609,6 +682,8 @@ function closeGalleryModal() {
 
   if (imageEl) {
     imageEl.src = "";
+    imageEl.classList.remove("is-error");
+    imageEl.onerror = null;
   }
 }
 
@@ -618,14 +693,14 @@ function renderGallery() {
     return;
   }
 
-  if (GALLERY_PHOTOS.length === 0) {
+  if (galleryItems.length === 0) {
     gridEl.innerHTML = '<p class="empty-message">등록된 사진이 없습니다.</p>';
     return;
   }
 
-  gridEl.innerHTML = GALLERY_PHOTOS.map((photo, index) =>
-    createGalleryCard(photo, index)
-  ).join("");
+  gridEl.innerHTML = galleryItems
+    .map((item, index) => createGalleryCard(item, index))
+    .join("");
 
   bindGalleryImageFallbacks();
 }
@@ -647,9 +722,9 @@ function initGalleryPage() {
     }
 
     const index = Number(cardBtn.dataset.index);
-    const photo = GALLERY_PHOTOS[index];
-    if (photo) {
-      openGalleryModal(photo);
+    const item = galleryItems[index];
+    if (item) {
+      openGalleryModal(item);
     }
   });
 
