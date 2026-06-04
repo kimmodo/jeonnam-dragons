@@ -511,39 +511,45 @@ h2,
   white-space: nowrap;
 }
 
-/* index.html 메인 */
+/* index.html 메인 (모바일 우선 세로형) */
 #home-page {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 400px;
   min-height: 100vh;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.site-header--home {
+  margin-bottom: var(--space-sm);
+}
+
+.site-header--home .site-brand {
+  padding: var(--space-sm) 0 2px;
+  font-size: clamp(1.7rem, 8.5vw, 2.35rem);
+  font-weight: 900;
+  letter-spacing: 0.05em;
 }
 
 #home-page .home-main {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-}
-
-.home-dashboard {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: var(--space-sm);
-  align-items: start;
-}
-
-.home-games {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  min-width: 0;
+  gap: 10px;
+  width: 100%;
 }
 
 .home-game-slot {
-  min-width: 0;
+  width: 100%;
 }
 
 .home-game-card {
-  padding: 12px;
+  width: 100%;
+  padding: 14px 12px;
   text-align: left;
   background: var(--color-panel);
   border: 1px solid var(--color-border);
@@ -564,12 +570,12 @@ h2,
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .home-game-card__title {
-  margin: 0 0 6px;
-  font-size: 0.9rem;
+  margin: 0 0 8px;
+  font-size: 0.95rem;
   font-weight: bold;
 }
 
@@ -578,58 +584,63 @@ h2,
 }
 
 .home-game-card__row {
-  margin: 3px 0;
-  font-size: 0.82rem;
-  line-height: 1.4;
+  margin: 5px 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
   word-break: keep-all;
 }
 
 .home-game-card__row strong {
   display: inline-block;
-  min-width: 3.8em;
+  min-width: 3.6em;
   font-weight: bold;
 }
 
 .home-game-card__meta {
-  margin: 6px 0 0;
-  font-size: 0.76rem;
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
   opacity: 0.75;
 }
 
 .home-game-card__empty {
   margin: 0;
-  font-size: 0.84rem;
-  line-height: 1.45;
+  font-size: 0.88rem;
+  line-height: 1.5;
   opacity: 0.85;
 }
 
-#home-page .home-menu.menu-card {
+.home-menu-grid {
   position: relative;
   z-index: 2;
   display: grid;
-  gap: var(--space-sm);
-  margin: 0;
-  padding: var(--space-sm);
-  align-self: start;
-}
-
-#home-page .home-menu .nav-btn {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   width: 100%;
-  max-width: 150px;
-  margin-left: auto;
-  padding: 10px 10px;
-  font-size: 0.82rem;
 }
 
-@media (max-width: 640px) {
-  .home-dashboard {
+.home-menu-grid .nav-btn {
+  width: 100%;
+  margin: 0;
+  padding: 12px 8px;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+@media (max-width: 300px) {
+  .home-menu-grid {
     grid-template-columns: 1fr;
   }
+}
 
-  #home-page .home-menu .nav-btn {
-    max-width: none;
-    margin-left: 0;
-  }
+#home-page .bottom-character-wrap {
+  margin-top: 4px;
+  padding: 0;
+}
+
+#home-page .bottom-character {
+  width: min(200px, 62vw);
+  max-height: 180px;
 }
 
 .home-footer {
@@ -1588,9 +1599,19 @@ body.gallery-modal-open {
     padding-bottom: 8px;
   }
 
+  #home-page .bottom-character-wrap {
+    margin-top: 4px;
+    padding-bottom: 0;
+  }
+
   .bottom-character {
     width: min(280px, 88vw);
     max-height: 260px;
+  }
+
+  #home-page .bottom-character {
+    width: min(200px, 62vw);
+    max-height: 180px;
   }
 
   .full-view-nav {
