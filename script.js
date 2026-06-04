@@ -527,26 +527,26 @@ function escapeHtml(text) {
 // images/gallery 폴더에 사진을 넣고 galleryItems 배열만 수정하세요.
 const galleryItems = [
   {
-    image: "./images/gallery/photo1.jpg",
-    title: "경기 스냅 1",
+    image: "./images/gallery/modo.png",
+    title: "김모도",
     description: "광주 경기 응원 현장",
     date: "2026.03.15",
   },
   {
     image: "./images/gallery/photo2.jpg",
-    title: "경기 스냅 2",
+    title: "준비중",
     description: "원정 응원 스냅",
     date: "2026.03.22",
   },
   {
     image: "./images/gallery/photo3.jpg",
-    title: "응원 현장",
+    title: "준비중",
     description: "서포터즈 응원 모습",
     date: "2026.04.05",
   },
   {
     image: "./images/gallery/photo4.jpg",
-    title: "팀 사진",
+    title: "준비중",
     description: "시즌 오프닝 데이",
     date: "2026.04.12",
   },
