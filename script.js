@@ -674,7 +674,7 @@ if (isGalleryPage()) {
 
 // 관리자 Google uid를 아래 배열에 추가하세요.
 const ADMIN_UIDS = [
-  // "여기에_Google_uid_입력",
+  // "p9iiBJc9Ead01yBj7goTR9vZ2yG2",
 ];
 
 const FIREBASE_CONFIG = {
