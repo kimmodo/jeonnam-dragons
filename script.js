@@ -674,6 +674,7 @@ if (isGalleryPage()) {
 
 // 관리자 Google uid를 아래 배열에 추가하세요.
 const ADMIN_UIDS = [
+  // 관리자 Google uid를 따옴표 포함 문자열로 추가 (주석 처리하면 적용 안 됨)
   // "p9iiBJc9Ead01yBj7goTR9vZ2yG2",
 ];
 
@@ -736,7 +737,13 @@ function isBoardPage() {
 }
 
 function isBoardAdmin(uid) {
-  return Boolean(uid && ADMIN_UIDS.includes(uid));
+  if (!uid) {
+    return false;
+  }
+
+  return ADMIN_UIDS.some(
+    (adminUid) => typeof adminUid === "string" && adminUid.trim() === uid
+  );
 }
 
 function getBoardDisplayAuthor(item) {
@@ -789,14 +796,12 @@ function setBoardNicknameStatus(message, visible) {
 
 const BOARD_DEFAULT_NICKNAME = "전남팬";
 
-function buildBoardUserFields(user, nickname) {
-  const trimmedNickname =
-    typeof nickname === "string" ? nickname.trim() : "";
-  const defaultNickname =
-    (user.displayName || "").trim() || BOARD_DEFAULT_NICKNAME;
+function getDefaultNicknameFromGoogle(user) {
+  return (user.displayName || "").trim() || BOARD_DEFAULT_NICKNAME;
+}
 
+function getGoogleProfileMeta(user) {
   return {
-    nickname: trimmedNickname || defaultNickname,
     email: user.email ?? null,
     photoURL: user.photoURL ?? null,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -812,25 +817,40 @@ async function fetchUserProfile(db, uid) {
   return snapshot.data();
 }
 
-async function saveUserProfile(db, user, nickname) {
+async function ensureUserProfile(db, user) {
   const userRef = db.collection(BOARD_USERS_COLLECTION).doc(user.uid);
   const snapshot = await userRef.get();
-  const profileData = buildBoardUserFields(user, nickname);
 
-  if (!snapshot.exists) {
-    profileData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+  if (snapshot.exists) {
+    return snapshot.data();
   }
 
-  await userRef.set(profileData, { merge: true });
-}
+  const initialProfile = {
+    nickname: getDefaultNicknameFromGoogle(user),
+    ...getGoogleProfileMeta(user),
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
 
-async function ensureUserProfile(db, user) {
-  await saveUserProfile(db, user);
+  await userRef.set(initialProfile);
   return fetchUserProfile(db, user.uid);
 }
 
 async function updateUserNickname(db, user, nickname) {
-  await saveUserProfile(db, user, nickname);
+  const userRef = db.collection(BOARD_USERS_COLLECTION).doc(user.uid);
+  const snapshot = await userRef.get();
+  const profileData = {
+    nickname: nickname.trim(),
+    ...getGoogleProfileMeta(user),
+  };
+
+  if (!snapshot.exists) {
+    profileData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+    if (!profileData.nickname) {
+      profileData.nickname = getDefaultNicknameFromGoogle(user);
+    }
+  }
+
+  await userRef.set(profileData, { merge: true });
 }
 
 async function signInWithGoogle(auth) {
@@ -1724,9 +1744,7 @@ function initBoardPage() {
     boardAuthUser = user;
 
     if (user) {
-      console.log("[board] 현재 Google uid:", user.uid);
       currentUid = user.uid;
-      isAdminUser = isBoardAdmin(user.uid);
 
       try {
         boardUserProfile = await ensureUserProfile(db, user);
@@ -1734,6 +1752,15 @@ function initBoardPage() {
         console.error("[board] 사용자 문서 생성/확인 실패:", error);
         boardUserProfile = null;
       }
+
+      const isAdmin = isBoardAdmin(user.uid);
+      isAdminUser = isAdmin;
+      const nickname = getBoardNickname();
+
+      console.log("[board] 현재 Google uid:", user.uid);
+      console.log("[board] ADMIN_UIDS:", ADMIN_UIDS);
+      console.log("[board] isAdmin:", isAdmin);
+      console.log("[board] loaded nickname:", nickname);
     } else {
       currentUid = null;
       isAdminUser = false;
@@ -1794,6 +1821,7 @@ function initBoardPage() {
         await updateUserNickname(db, boardAuthUser, nickname);
         boardUserProfile = await fetchUserProfile(db, currentUid);
         updateBoardAuthUi();
+        updateBoardAdminUi(currentUid);
         setBoardNicknameStatus(BOARD_NICKNAME_SAVE_SUCCESS_MESSAGE, true);
         setTimeout(() => setBoardNicknameStatus("", false), 2000);
       } catch (error) {
