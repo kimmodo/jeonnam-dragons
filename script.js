@@ -5,6 +5,22 @@ externalLinks.forEach((link) => {
   link.rel = "noopener noreferrer";
 });
 
+function initSiteNav() {
+  const toggleBtn = document.querySelector(".site-nav-toggle");
+  const panelEl = document.querySelector(".site-nav-panel");
+
+  if (!toggleBtn || !panelEl) {
+    return;
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    const collapsed = panelEl.classList.toggle("is-collapsed");
+    toggleBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  });
+}
+
+initSiteNav();
+
 // --- 공식 API 일정/결과 (schedule, past-results, upcoming-games) ---
 
 const GAME_API_URL = "https://api.dragons.co.kr/game";
