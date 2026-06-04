@@ -54,7 +54,6 @@ img {
 }
 
 /* 메인·일정·순위 공통 패널 */
-.hero-card,
 .menu-card,
 .content-card {
   background: var(--color-panel);
@@ -80,20 +79,6 @@ h1 {
 h2,
 .section-subtitle {
   font-size: 1.05rem;
-}
-
-.subtitle {
-  margin: var(--space-sm) 0 0;
-  font-weight: bold;
-  font-size: 1rem;
-}
-
-.intro {
-  margin: var(--space-md) 0 0;
-  padding: 0 2px;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  word-break: keep-all;
 }
 
 .menu-card {
@@ -1272,7 +1257,6 @@ body.gallery-modal-open {
     font-size: 1.35rem;
   }
 
-  .hero-card,
   .menu-card,
   .content-card {
     padding: var(--space-lg) 12px;

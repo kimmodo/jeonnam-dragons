@@ -1865,11 +1865,6 @@ async function saveBoardPost(db, values, uid, authorNickname) {
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
 
-  console.log("[board] 작성 직전 uid:", uid);
-  console.log("[board] 작성 직전 isAdmin:", isBoardAdmin(uid));
-  console.log("[board] 작성 직전 isNotice:", Boolean(values.isNotice));
-  console.log("[board] 작성할 postData:", postData);
-
   await db.collection(BOARD_POSTS_COLLECTION).add(postData);
 }
 
@@ -2171,14 +2166,7 @@ function setupBoardAuthListeners(db, auth, listStatusEl, onAuthReady) {
         boardUserProfile = null;
       }
 
-      const isAdmin = isBoardAdmin(user.uid);
-      isAdminUser = isAdmin;
-      const nickname = getBoardNickname();
-
-      console.log("[board] 현재 Google uid:", user.uid);
-      console.log("[board] ADMIN_UIDS:", ADMIN_UIDS);
-      console.log("[board] isAdmin:", isAdmin);
-      console.log("[board] loaded nickname:", nickname);
+      isAdminUser = isBoardAdmin(user.uid);
     } else {
       currentUid = null;
       isAdminUser = false;
