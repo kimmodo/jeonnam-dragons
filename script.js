@@ -673,7 +673,8 @@ if (isGalleryPage()) {
 // --- board.html 전용: Firestore 자유게시판 ---
 
 // 관리자 Google uid를 아래 배열에 추가하세요.
-const ADMIN_UIDS = [p9iiBJc9Ead01yBj7goTR9vZ2yG2
+const ADMIN_UIDS = [
+  "p9iiBJc9Ead01yBj7goTR9vZ2yG2",
 ];
 
 const FIREBASE_CONFIG = {
