@@ -787,6 +787,22 @@ function setBoardNicknameStatus(message, visible) {
   statusEl.classList.toggle("is-hidden", !visible);
 }
 
+const BOARD_DEFAULT_NICKNAME = "전남팬";
+
+function buildBoardUserFields(user, nickname) {
+  const trimmedNickname =
+    typeof nickname === "string" ? nickname.trim() : "";
+  const defaultNickname =
+    (user.displayName || "").trim() || BOARD_DEFAULT_NICKNAME;
+
+  return {
+    nickname: trimmedNickname || defaultNickname,
+    email: user.email ?? null,
+    photoURL: user.photoURL ?? null,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+}
+
 async function fetchUserProfile(db, uid) {
   const snapshot = await db.collection(BOARD_USERS_COLLECTION).doc(uid).get();
   if (!snapshot.exists) {
@@ -796,30 +812,25 @@ async function fetchUserProfile(db, uid) {
   return snapshot.data();
 }
 
-async function ensureUserProfile(db, user) {
+async function saveUserProfile(db, user, nickname) {
   const userRef = db.collection(BOARD_USERS_COLLECTION).doc(user.uid);
   const snapshot = await userRef.get();
+  const profileData = buildBoardUserFields(user, nickname);
 
   if (!snapshot.exists) {
-    const nickname = (user.displayName || "팬").trim() || "팬";
-
-    await userRef.set({
-      nickname,
-      email: user.email || "",
-      photoURL: user.photoURL || "",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
+    profileData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
   }
 
+  await userRef.set(profileData, { merge: true });
+}
+
+async function ensureUserProfile(db, user) {
+  await saveUserProfile(db, user);
   return fetchUserProfile(db, user.uid);
 }
 
-async function updateUserNickname(db, uid, nickname) {
-  await db.collection(BOARD_USERS_COLLECTION).doc(uid).update({
-    nickname,
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-  });
+async function updateUserNickname(db, user, nickname) {
+  await saveUserProfile(db, user, nickname);
 }
 
 async function signInWithGoogle(auth) {
@@ -1720,7 +1731,7 @@ function initBoardPage() {
       try {
         boardUserProfile = await ensureUserProfile(db, user);
       } catch (error) {
-        console.error("[board] 사용자 프로필 불러오기 실패:", error);
+        console.error("[board] 사용자 문서 생성/확인 실패:", error);
         boardUserProfile = null;
       }
     } else {
@@ -1780,8 +1791,8 @@ function initBoardPage() {
       }
 
       try {
-        await updateUserNickname(db, currentUid, nickname);
-        boardUserProfile = { ...boardUserProfile, nickname };
+        await updateUserNickname(db, boardAuthUser, nickname);
+        boardUserProfile = await fetchUserProfile(db, currentUid);
         updateBoardAuthUi();
         setBoardNicknameStatus(BOARD_NICKNAME_SAVE_SUCCESS_MESSAGE, true);
         setTimeout(() => setBoardNicknameStatus("", false), 2000);
