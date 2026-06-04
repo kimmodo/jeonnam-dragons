@@ -8,6 +8,11 @@
   --color-text: #111111;
   --color-border: rgba(17, 17, 17, 0.14);
 
+  --card-bg: var(--color-panel);
+  --card-border: 1px solid var(--color-border);
+  --card-radius: var(--radius);
+  --card-shadow: var(--shadow-soft);
+
   --shadow-soft: 0 1px 4px rgba(17, 17, 17, 0.08);
   --shadow-btn: 0 2px 0 rgba(17, 17, 17, 0.75);
 
@@ -197,6 +202,21 @@ h2,
   padding: var(--space-md);
 }
 
+/* 사이트 공통 카드 (버튼·배지 제외) */
+.game-card,
+.home-game-card,
+.gallery-card,
+.board-list-item,
+.board-post-card,
+.board-comment-item,
+.board-comment-empty,
+.empty-message {
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
 .btn,
 .nav-btn,
 .back-link,
@@ -283,14 +303,19 @@ h2,
 
 .api-status.is-loading,
 .schedule-status.is-loading,
-.rank-status.is-loading {
-  border-style: dashed;
+.rank-status.is-loading,
+.api-status.is-error,
+.schedule-status.is-error,
+.rank-status.is-error,
+.api-status.is-empty,
+.schedule-status.is-empty,
+.rank-status.is-empty {
+  border: var(--card-border);
 }
 
 .api-status.is-error,
 .schedule-status.is-error,
 .rank-status.is-error {
-  border: 2px solid var(--color-text);
   background: var(--color-panel);
   font-weight: bold;
 }
@@ -298,7 +323,6 @@ h2,
 .api-status.is-empty,
 .schedule-status.is-empty,
 .rank-status.is-empty {
-  border: 1px dashed var(--color-border);
   background: var(--color-panel-alt);
 }
 
@@ -316,18 +340,6 @@ h2,
 .game-card {
   padding: var(--space-md);
   text-align: center;
-  background: var(--color-panel-alt);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: none;
-}
-
-.past-card {
-  border-left: 3px solid var(--color-text);
-}
-
-.next-card {
-  border-left: 3px dashed var(--color-text);
 }
 
 .card-top {
@@ -387,9 +399,6 @@ h2,
   padding: var(--space-md);
   font-size: 0.9rem;
   text-align: center;
-  background: var(--color-panel-alt);
-  border: 1px dashed var(--color-border);
-  border-radius: 10px;
 }
 
 .official-link {
@@ -407,9 +416,7 @@ h2,
 
 .game-card--featured {
   padding: var(--space-lg) var(--space-md);
-  background: var(--color-panel);
-  border: 2px solid var(--color-text);
-  border-radius: var(--radius);
+  background: var(--color-panel-highlight);
 }
 
 .game-card--featured .game-date {
@@ -494,11 +501,6 @@ h2,
   font-weight: bold;
 }
 
-.rank-row--jeonnam td:first-child {
-  border-left: 4px solid var(--color-text);
-  padding-left: 8px;
-}
-
 .col-team {
   text-align: left;
   padding-left: 12px;
@@ -567,18 +569,6 @@ h2,
 .home-game-card {
   padding: 8px 6px 9px;
   text-align: center;
-  background: var(--color-panel);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-soft);
-}
-
-.home-game-card--next {
-  border-left: 3px dashed var(--color-text);
-}
-
-.home-game-card--past {
-  border-left: 3px solid var(--color-text);
 }
 
 .home-game-card__top {
@@ -765,13 +755,9 @@ h2,
   display: block;
   width: 100%;
   padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background: var(--color-panel-alt);
   overflow: hidden;
   cursor: pointer;
   text-align: left;
-  box-shadow: var(--shadow-soft);
 }
 
 .gallery-image-wrap {
@@ -842,10 +828,10 @@ h2,
   width: min(100%, 400px);
   max-height: 90vh;
   padding: var(--space-md);
-  border: 2px solid var(--color-text);
-  border-radius: var(--radius);
-  background: var(--color-panel);
-  box-shadow: var(--shadow-soft);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
   overflow: auto;
 }
 
@@ -1071,9 +1057,10 @@ body.gallery-modal-open {
   padding: 10px;
   font-size: 0.84rem;
   text-align: center;
-  border-radius: 8px;
-  background: var(--color-panel);
-  border: 1px dashed var(--color-border);
+  border-radius: var(--card-radius);
+  background: var(--card-bg);
+  border: var(--card-border);
+  box-shadow: var(--card-shadow);
 }
 
 .board-form {
@@ -1151,24 +1138,21 @@ body.gallery-modal-open {
 }
 
 .board-status.is-loading,
-.board-status.is-saving {
-  border-style: dashed;
+.board-status.is-saving,
+.board-status.is-success,
+.board-status.is-error,
+.board-status.is-empty {
+  border: var(--card-border);
 }
 
 .board-status.is-success {
-  border: 2px solid var(--color-text);
   background: var(--color-panel-highlight);
   font-weight: bold;
 }
 
 .board-status.is-error {
-  border: 2px solid var(--color-text);
   background: var(--color-panel);
   font-weight: bold;
-}
-
-.board-status.is-empty {
-  border: 1px dashed var(--color-border);
 }
 
 .board-status.is-hidden {
@@ -1186,16 +1170,10 @@ body.gallery-modal-open {
   text-align: left;
   text-decoration: none;
   color: var(--color-text);
-  background: var(--color-panel-alt);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  border-left: 3px solid var(--color-text);
 }
 
 .board-list-item--notice {
   background: var(--color-panel-highlight);
-  border: 2px solid var(--color-text);
-  border-left: 4px solid var(--color-text);
 }
 
 .board-list-title {
@@ -1266,10 +1244,6 @@ body.gallery-modal-open {
 .board-post-card {
   padding: var(--space-md);
   text-align: left;
-  background: var(--color-panel-alt);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  border-left: 3px solid var(--color-text);
 }
 
 .board-notices-group {
@@ -1285,9 +1259,6 @@ body.gallery-modal-open {
 
 .board-post-card--notice {
   background: var(--color-panel-highlight);
-  border: 2px solid var(--color-text);
-  border-left: 4px solid var(--color-text);
-  box-shadow: var(--shadow-soft);
 }
 
 .board-notice-badge {
@@ -1425,7 +1396,7 @@ body.gallery-modal-open {
 .board-comments {
   margin-top: var(--space-md);
   padding-top: var(--space-sm);
-  border-top: 1px dashed var(--color-border);
+  border-top: 1px solid var(--color-border);
 }
 
 .board-comments-toggle {
@@ -1472,9 +1443,6 @@ body.gallery-modal-open {
 .board-comment-empty {
   padding: 10px;
   margin-bottom: 6px;
-  border-radius: 8px;
-  background: var(--color-panel);
-  border: 1px solid var(--color-border);
 }
 
 .board-comment-empty {
