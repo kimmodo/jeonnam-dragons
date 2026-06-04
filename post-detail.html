@@ -3,17 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>자유게시판 | 2026전남드래곤즈</title>
+    <title>게시글 | 2026전남드래곤즈</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
-    <main class="page">
-      <a class="back-link" href="./index.html">← 메인으로 돌아가기</a>
+    <main class="page" id="post-detail-root">
+      <a class="back-link" href="./board.html">← 게시판 목록</a>
 
-      <section class="content-card board-page" id="board-list-page">
-        <h1>자유게시판</h1>
-        <p class="desc">전남드래곤즈 팬들의 자유 게시판입니다.</p>
-
+      <section class="content-card board-page post-detail-page">
         <div id="board-auth" class="board-auth">
           <div id="board-auth-guest" class="board-auth-guest">
             <p class="board-auth-message">
@@ -56,70 +53,15 @@
           </div>
         </div>
 
-        <div id="board-write-section" class="board-write-section is-hidden">
-        <form id="board-form" class="board-form" novalidate>
-          <div class="board-field">
-            <label class="board-label" for="board-title">제목</label>
-            <input
-              id="board-title"
-              class="board-input"
-              type="text"
-              name="title"
-              maxlength="80"
-              autocomplete="off"
-              placeholder="제목을 입력하세요"
-            />
-          </div>
-
-          <div class="board-field">
-            <label class="board-label" for="board-content">내용</label>
-            <textarea
-              id="board-content"
-              class="board-textarea"
-              name="content"
-              rows="5"
-              maxlength="2000"
-              placeholder="내용을 입력하세요"
-            ></textarea>
-          </div>
-
-          <div id="board-notice-field" class="board-field board-notice-field is-hidden">
-            <label class="board-notice-label" for="board-is-notice">
-              <input
-                id="board-is-notice"
-                type="checkbox"
-                name="isNotice"
-              />
-              공지글로 등록
-            </label>
-          </div>
-
-          <p
-            id="board-form-status"
-            class="board-status is-hidden"
-            role="status"
-            aria-live="polite"
-          ></p>
-
-          <button type="submit" class="btn board-submit-btn">등록</button>
-        </form>
-        </div>
-
-        <h2 class="section-subtitle">게시글 목록</h2>
         <p
-          id="board-list-status"
+          id="post-detail-status"
           class="board-status is-loading"
           role="status"
           aria-live="polite"
         >
           게시글을 불러오는 중...
         </p>
-        <div id="board-posts-list" class="board-posts-list"></div>
-        <nav
-          id="board-pagination"
-          class="board-pagination is-hidden"
-          aria-label="게시글 페이지"
-        ></nav>
+        <div id="post-detail-content"></div>
       </section>
     </main>
 
