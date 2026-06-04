@@ -53,9 +53,38 @@ img {
   height: auto;
 }
 
+/* 전 페이지 공통 상단 */
+.site-header {
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.site-brand {
+  display: inline-block;
+  max-width: 100%;
+  margin: 0;
+  padding: var(--space-md) var(--space-sm) 4px;
+  font-size: clamp(1.6rem, 9vw, 3.5rem);
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  color: var(--color-text);
+  text-decoration: none;
+  word-break: keep-all;
+}
+
+.site-brand:hover,
+.site-brand:focus-visible {
+  opacity: 0.88;
+}
+
+.site-header .site-nav {
+  margin-bottom: 0;
+}
+
 /* 전 페이지 공통 상단 메뉴 */
 .site-nav {
-  margin-bottom: var(--space-sm);
+  margin-top: 4px;
 }
 
 .site-nav-toggle {
@@ -493,16 +522,6 @@ h2,
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-}
-
-.home-title {
-  margin: 0 0 var(--space-lg);
-  padding: var(--space-lg) var(--space-sm) 0;
-  font-size: 3.5rem;
-  font-weight: bold;
-  letter-spacing: 0.06em;
-  text-align: center;
-  line-height: 1.2;
 }
 
 #home-page .menu-card {
@@ -1397,9 +1416,8 @@ body.gallery-modal-open {
     margin-bottom: 12px;
   }
 
-  .home-title {
-    font-size: 4rem;
-    padding-top: var(--space-md);
+  .site-brand {
+    padding-top: var(--space-sm);
     letter-spacing: 0.04em;
   }
 
