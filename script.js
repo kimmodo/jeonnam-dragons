@@ -688,6 +688,16 @@ const FIREBASE_CONFIG = {
 
 const BOARD_POSTS_COLLECTION = "posts";
 const BOARD_PAGE_SIZE = 5;
+const BOARD_COMMENTS_LIMIT = 10;
+const BOARD_COMMENT_LOAD_ERROR_MESSAGE =
+  "댓글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
+const BOARD_COMMENT_EMPTY_MESSAGE = "첫 댓글을 남겨보세요.";
+const BOARD_COMMENT_VALIDATION_MESSAGE =
+  "작성자와 댓글 내용을 입력해주세요.";
+const BOARD_COMMENT_SAVE_ERROR_MESSAGE =
+  "댓글 등록에 실패했습니다. 잠시 후 다시 시도해주세요.";
+const BOARD_COMMENT_DELETE_ERROR_MESSAGE =
+  "댓글 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.";
 
 let boardPostsCache = [];
 let boardCurrentPage = 1;
@@ -837,6 +847,42 @@ function createBoardPostCard(postId, post, currentUid, isAdminUser) {
       </div>
       ${editForm}
       <p class="board-post-status is-hidden" role="status" aria-live="polite"></p>
+      <section class="board-comments">
+        <button
+          type="button"
+          class="board-comments-toggle"
+          data-action="toggle-comments"
+          data-id="${postId}"
+        >
+          댓글 보기
+        </button>
+        <div class="board-comments-panel is-hidden">
+          <p
+            class="board-comments-status is-hidden"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <ul class="board-comments-list"></ul>
+          <form class="board-comment-form">
+            <input
+              class="board-comment-input"
+              type="text"
+              name="author"
+              maxlength="30"
+              placeholder="닉네임"
+              autocomplete="nickname"
+            />
+            <textarea
+              class="board-comment-textarea"
+              name="content"
+              rows="2"
+              maxlength="500"
+              placeholder="댓글을 입력하세요"
+            ></textarea>
+            <button type="submit" class="board-comment-submit">댓글 등록</button>
+          </form>
+        </div>
+      </section>
     </article>
   `;
 }
@@ -910,6 +956,132 @@ function getBoardEditValues(editFormEl) {
   const content = editFormEl.querySelector(".board-edit-content").value.trim();
 
   return { title, content };
+}
+
+function setBoardCommentsStatus(cardEl, message, visible) {
+  const statusEl = cardEl.querySelector(".board-comments-status");
+  if (!statusEl) {
+    return;
+  }
+
+  statusEl.textContent = message || "";
+  statusEl.classList.toggle("is-hidden", !visible);
+}
+
+function getBoardCommentFormValues(formEl) {
+  const author = formEl.elements.author.value.trim();
+  const content = formEl.elements.content.value.trim();
+
+  return { author, content };
+}
+
+function createBoardCommentItem(
+  postId,
+  commentId,
+  comment,
+  currentUid,
+  isAdminUser
+) {
+  const isOwner = Boolean(comment.uid && comment.uid === currentUid);
+  const canDelete = isOwner || isAdminUser;
+  const deleteBtn = canDelete
+    ? `<button type="button" class="board-comment-delete" data-action="delete-comment" data-post-id="${postId}" data-comment-id="${commentId}">삭제</button>`
+    : "";
+
+  return `
+    <li class="board-comment-item" data-comment-id="${commentId}">
+      <p class="board-comment-meta">
+        ${escapeHtml(comment.author || "")} · ${formatBoardDate(comment.createdAt)}
+      </p>
+      <p class="board-comment-content">${escapeHtml(comment.content || "")}</p>
+      ${deleteBtn}
+    </li>
+  `;
+}
+
+function renderBoardCommentsList(
+  cardEl,
+  comments,
+  postId,
+  currentUid,
+  isAdminUser
+) {
+  const listEl = cardEl.querySelector(".board-comments-list");
+  if (!listEl) {
+    return;
+  }
+
+  if (!comments.length) {
+    listEl.innerHTML = `<li class="board-comment-empty">${BOARD_COMMENT_EMPTY_MESSAGE}</li>`;
+    return;
+  }
+
+  listEl.innerHTML = comments
+    .map((item) =>
+      createBoardCommentItem(
+        postId,
+        item.id,
+        item.data,
+        currentUid,
+        isAdminUser
+      )
+    )
+    .join("");
+}
+
+async function loadPostComments(db, postId, cardEl, currentUid, isAdminUser) {
+  const listEl = cardEl.querySelector(".board-comments-list");
+  if (!listEl) {
+    return;
+  }
+
+  setBoardCommentsStatus(cardEl, "댓글을 불러오는 중...", true);
+  listEl.innerHTML = "";
+
+  try {
+    const snapshot = await db
+      .collection(BOARD_POSTS_COLLECTION)
+      .doc(postId)
+      .collection("comments")
+      .orderBy("createdAt", "asc")
+      .limit(BOARD_COMMENTS_LIMIT)
+      .get();
+
+    const comments = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      data: doc.data(),
+    }));
+
+    renderBoardCommentsList(cardEl, comments, postId, currentUid, isAdminUser);
+    setBoardCommentsStatus(cardEl, "", false);
+    cardEl.dataset.commentsLoaded = "true";
+  } catch (error) {
+    console.error("[board] 댓글 불러오기 실패:", error);
+    listEl.innerHTML = "";
+    setBoardCommentsStatus(cardEl, BOARD_COMMENT_LOAD_ERROR_MESSAGE, true);
+  }
+}
+
+async function saveBoardComment(db, postId, values, uid) {
+  await db
+    .collection(BOARD_POSTS_COLLECTION)
+    .doc(postId)
+    .collection("comments")
+    .add({
+      author: values.author,
+      content: values.content,
+      uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+}
+
+async function deleteBoardComment(db, postId, commentId) {
+  await db
+    .collection(BOARD_POSTS_COLLECTION)
+    .doc(postId)
+    .collection("comments")
+    .doc(commentId)
+    .delete();
 }
 
 function sortBoardPostsForDisplay(docs) {
@@ -1115,6 +1287,61 @@ function bindBoardPostActions(db, getBoardContext) {
     }
 
     const action = actionBtn.dataset.action;
+
+    if (action === "toggle-comments") {
+      const postId = actionBtn.dataset.id;
+      const cardEl = getBoardPostCard(postId);
+      const panelEl = cardEl?.querySelector(".board-comments-panel");
+
+      if (!cardEl || !panelEl) {
+        return;
+      }
+
+      const isOpening = panelEl.classList.contains("is-hidden");
+
+      if (isOpening) {
+        panelEl.classList.remove("is-hidden");
+        actionBtn.textContent = "댓글 숨기기";
+
+        if (cardEl.dataset.commentsLoaded !== "true") {
+          await loadPostComments(db, postId, cardEl, currentUid, isAdminUser);
+        }
+      } else {
+        panelEl.classList.add("is-hidden");
+        actionBtn.textContent = "댓글 보기";
+      }
+
+      return;
+    }
+
+    if (action === "delete-comment") {
+      const postId = actionBtn.dataset.postId;
+      const commentId = actionBtn.dataset.commentId;
+      const cardEl = getBoardPostCard(postId);
+
+      if (!cardEl || !commentId) {
+        return;
+      }
+
+      const confirmed = window.confirm("이 댓글을 삭제할까요?");
+      if (!confirmed) {
+        return;
+      }
+
+      actionBtn.disabled = true;
+
+      try {
+        await deleteBoardComment(db, postId, commentId);
+        await loadPostComments(db, postId, cardEl, currentUid, isAdminUser);
+      } catch (error) {
+        console.error("[board] 댓글 삭제 실패:", error);
+        setBoardCommentsStatus(cardEl, BOARD_COMMENT_DELETE_ERROR_MESSAGE, true);
+        actionBtn.disabled = false;
+      }
+
+      return;
+    }
+
     const postId = actionBtn.dataset.id;
     const cardEl = getBoardPostCard(postId);
 
@@ -1156,6 +1383,48 @@ function bindBoardPostActions(db, getBoardContext) {
 
   listEl.addEventListener("submit", async (event) => {
     const { currentUid, isAdminUser } = getBoardContext();
+    const commentFormEl = event.target.closest(".board-comment-form");
+
+    if (commentFormEl) {
+      event.preventDefault();
+
+      const cardEl = commentFormEl.closest(".board-post-card");
+      const postId = cardEl?.dataset.postId;
+      const submitBtn = commentFormEl.querySelector(".board-comment-submit");
+
+      if (!cardEl || !postId || !currentUid) {
+        return;
+      }
+
+      const values = getBoardCommentFormValues(commentFormEl);
+
+      if (!values.author || !values.content) {
+        setBoardCommentsStatus(cardEl, BOARD_COMMENT_VALIDATION_MESSAGE, true);
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+      }
+
+      try {
+        await saveBoardComment(db, postId, values, currentUid);
+        commentFormEl.reset();
+        await loadPostComments(db, postId, cardEl, currentUid, isAdminUser);
+        setBoardCommentsStatus(cardEl, "댓글이 등록되었습니다.", true);
+        setTimeout(() => setBoardCommentsStatus(cardEl, "", false), 2000);
+      } catch (error) {
+        console.error("[board] 댓글 등록 실패:", error);
+        setBoardCommentsStatus(cardEl, BOARD_COMMENT_SAVE_ERROR_MESSAGE, true);
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+        }
+      }
+
+      return;
+    }
+
     const editFormEl = event.target.closest(".board-edit-form");
     if (!editFormEl) {
       return;
