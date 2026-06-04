@@ -552,30 +552,12 @@ h2,
   display: flex;
 }
 
-.gallery-card-body {
-  padding: 10px;
-}
-
 .gallery-card-title {
-  margin: 0 0 4px;
+  margin: 0;
+  padding: 8px 10px;
   font-size: 0.88rem;
   font-weight: bold;
   line-height: 1.35;
-}
-
-.gallery-card-description {
-  margin: 0 0 6px;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  color: var(--color-text);
-  opacity: 0.88;
-}
-
-.gallery-card-date {
-  margin: 0;
-  font-size: 0.72rem;
-  color: var(--color-text);
-  opacity: 0.65;
 }
 
 .gallery-modal {
@@ -647,34 +629,11 @@ h2,
   display: none;
 }
 
-.gallery-modal-date {
-  margin: var(--space-sm) 0 0;
-  font-size: 0.78rem;
-  text-align: center;
-  opacity: 0.7;
-}
-
-.gallery-modal-date.is-hidden {
-  display: none;
-}
-
 .gallery-modal-title {
   margin: var(--space-sm) 0 0;
   font-size: 0.95rem;
   font-weight: bold;
   text-align: center;
-}
-
-.gallery-modal-description {
-  margin: 6px 0 0;
-  font-size: 0.88rem;
-  line-height: 1.5;
-  text-align: center;
-  opacity: 0.9;
-}
-
-.gallery-modal-description.is-hidden {
-  display: none;
 }
 
 body.gallery-modal-open {

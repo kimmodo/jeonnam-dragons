@@ -558,8 +558,6 @@ function isGalleryPage() {
 
 function createGalleryCard(item, index) {
   const title = item.title || "사진";
-  const description = item.description || "";
-  const date = item.date || "";
 
   return `
     <button type="button" class="gallery-card" data-index="${index}">
@@ -572,15 +570,7 @@ function createGalleryCard(item, index) {
         />
         <span class="gallery-fallback">이미지를 불러올 수 없습니다</span>
       </div>
-      <div class="gallery-card-body">
-        <p class="gallery-card-title">${escapeHtml(title)}</p>
-        ${
-          description
-            ? `<p class="gallery-card-description">${escapeHtml(description)}</p>`
-            : ""
-        }
-        ${date ? `<p class="gallery-card-date">${escapeHtml(date)}</p>` : ""}
-      </div>
+      <p class="gallery-card-title">${escapeHtml(title)}</p>
     </button>
   `;
 }
@@ -622,8 +612,6 @@ function openGalleryModal(item) {
   const modalEl = document.getElementById("gallery-modal");
   const imageEl = document.getElementById("gallery-modal-image");
   const titleEl = document.getElementById("gallery-modal-title");
-  const descriptionEl = document.getElementById("gallery-modal-description");
-  const dateEl = document.getElementById("gallery-modal-date");
   const imageFallbackEl = document.getElementById("gallery-modal-fallback");
 
   if (!modalEl || !imageEl || !titleEl) {
@@ -631,8 +619,6 @@ function openGalleryModal(item) {
   }
 
   const title = item.title || "사진";
-  const description = item.description || "";
-  const date = item.date || "";
 
   imageEl.alt = title;
 
@@ -652,16 +638,6 @@ function openGalleryModal(item) {
   }
 
   titleEl.textContent = title;
-
-  if (descriptionEl) {
-    descriptionEl.textContent = description;
-    descriptionEl.classList.toggle("is-hidden", !description);
-  }
-
-  if (dateEl) {
-    dateEl.textContent = date;
-    dateEl.classList.toggle("is-hidden", !date);
-  }
 
   modalEl.classList.remove("is-hidden");
   modalEl.setAttribute("aria-hidden", "false");
