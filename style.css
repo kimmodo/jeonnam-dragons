@@ -21,6 +21,7 @@
   --space-md: 16px;
   --space-lg: 20px;
   --page-max: 440px;
+  --page-gutter: 14px;
   --btn-padding: 14px 16px;
   --line-height: 1.55;
 }
@@ -31,6 +32,8 @@
 
 html {
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -48,7 +51,7 @@ body {
   max-width: 100%;
   min-height: 100vh;
   margin: 0 auto;
-  padding: var(--space-md);
+  padding: var(--page-gutter);
   background: var(--color-surface);
   overflow-x: hidden;
 }
@@ -68,13 +71,14 @@ img {
   display: inline-block;
   max-width: 100%;
   margin: 0;
-  padding: var(--space-md) var(--space-sm) 4px;
-  font-size: clamp(2.2rem, 11vw, 4.2rem);
+  padding: var(--space-sm) 4px 2px;
+  font-size: clamp(1.85rem, 9vw, 3rem);
   font-weight: 900;
   letter-spacing: 0.06em;
   line-height: 1.05;
   color: var(--color-text);
   text-decoration: none;
+  overflow-wrap: anywhere;
   word-break: keep-all;
 }
 
@@ -175,9 +179,10 @@ img {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
-  padding: var(--space-lg) var(--space-md);
+  padding: var(--space-md) var(--page-gutter);
   margin-bottom: var(--space-md);
   text-align: center;
+  min-width: 0;
 }
 
 h1,
@@ -215,6 +220,8 @@ h2,
   border: var(--card-border);
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .btn,
@@ -335,6 +342,8 @@ h2,
 .games-list {
   display: grid;
   gap: var(--space-sm);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .game-card {
@@ -354,6 +363,7 @@ h2,
   margin: 0;
   font-size: 0.92rem;
   font-weight: bold;
+  overflow-wrap: anywhere;
 }
 
 .meet-name {
@@ -368,11 +378,13 @@ h2,
   font-size: 1.02rem;
   font-weight: bold;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .field-name {
   margin: var(--space-sm) 0 0;
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .result-badge {
@@ -522,8 +534,6 @@ h2,
   min-height: 100vh;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 12px;
-  padding-right: 12px;
 }
 
 .site-header--home {
@@ -532,7 +542,7 @@ h2,
 
 .site-header--home .site-brand {
   padding: var(--space-sm) 0 2px;
-  font-size: clamp(2.2rem, 11vw, 4.2rem);
+  font-size: clamp(1.7rem, 8.5vw, 2.35rem);
   font-weight: 900;
   letter-spacing: 0.05em;
 }
@@ -550,7 +560,13 @@ h2,
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   width: 100%;
+  max-width: 100%;
   align-items: stretch;
+}
+
+.home-games-row > *,
+.home-menu-grid > * {
+  min-width: 0;
 }
 
 .home-game-slot {
@@ -600,7 +616,8 @@ h2,
   font-size: clamp(0.82rem, 4.1vw, 1.05rem);
   font-weight: 900;
   line-height: 1.22;
-  word-break: keep-all;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   flex: 1;
 }
 
@@ -609,7 +626,7 @@ h2,
   font-size: clamp(0.58rem, 2.8vw, 0.68rem);
   line-height: 1.3;
   opacity: 0.78;
-  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .home-game-card__sub + .home-game-card__sub {
@@ -800,6 +817,7 @@ h2,
   font-size: 0.88rem;
   font-weight: bold;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .gallery-modal {
@@ -999,6 +1017,7 @@ body.gallery-modal-open {
 
 .board-list-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-sm);
@@ -1181,6 +1200,7 @@ body.gallery-modal-open {
   font-size: 1rem;
   font-weight: bold;
   line-height: 1.4;
+  overflow-wrap: anywhere;
   word-break: break-word;
 }
 
@@ -1278,6 +1298,7 @@ body.gallery-modal-open {
   font-size: 1rem;
   font-weight: bold;
   line-height: 1.4;
+  overflow-wrap: anywhere;
   word-break: break-word;
 }
 
@@ -1292,6 +1313,7 @@ body.gallery-modal-open {
   font-size: 0.92rem;
   line-height: var(--line-height);
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   word-break: break-word;
 }
 
@@ -1462,6 +1484,7 @@ body.gallery-modal-open {
   font-size: 0.86rem;
   line-height: 1.45;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   word-break: break-word;
 }
 
@@ -1515,31 +1538,79 @@ body.gallery-modal-open {
 @media (max-width: 430px) {
   :root {
     --space-md: 12px;
-    --space-lg: 18px;
-    --btn-padding: 14px 12px;
+    --space-lg: 16px;
+    --page-gutter: 12px;
+    --btn-padding: 12px 10px;
   }
 
   .page {
-    padding: 12px;
+    padding: var(--page-gutter);
+  }
+
+  .site-header {
+    margin-bottom: var(--space-sm);
   }
 
   h1 {
-    font-size: 1.35rem;
+    font-size: 1.3rem;
   }
 
   .menu-card,
   .content-card {
-    padding: var(--space-lg) 12px;
-    margin-bottom: 12px;
+    padding: var(--space-md) var(--page-gutter);
+    margin-bottom: var(--space-sm);
   }
 
   .site-brand {
-    padding-top: var(--space-sm);
+    padding-top: 6px;
+    font-size: clamp(1.7rem, 8.2vw, 2.35rem);
     letter-spacing: 0.04em;
+  }
+
+  .site-header--home .site-brand {
+    font-size: clamp(1.6rem, 7.8vw, 2rem);
   }
 
   .home-footer {
     padding-top: var(--space-sm);
+  }
+
+  #home-page .home-main {
+    gap: 8px;
+  }
+
+  .home-game-card {
+    padding: 7px 5px 8px;
+  }
+
+  .home-menu-grid .nav-btn {
+    padding: 11px 6px;
+    font-size: 0.76rem;
+  }
+
+  .board-list-header {
+    margin-top: var(--space-sm);
+  }
+
+  .board-write-toggle-btn {
+    min-width: 0;
+    padding: 9px 12px;
+    font-size: 0.86rem;
+  }
+
+  .board-list-item,
+  .board-post-card,
+  .board-comment-item {
+    padding: 11px;
+  }
+
+  .board-post-stats {
+    gap: 8px 10px;
+  }
+
+  .board-auth-bar__welcome,
+  .board-auth-bar__links {
+    justify-content: center;
   }
 
   .btn,
@@ -1550,10 +1621,6 @@ body.gallery-modal-open {
   .gallery-modal-close {
     min-height: 44px;
     font-size: 0.92rem;
-  }
-
-  .menu-card {
-    padding: 12px;
   }
 
   .match-teams {
