@@ -8,12 +8,26 @@
   </head>
   <body>
     <main class="page" id="home-page">
-      <header class="hero-card">
-        <div class="hero-text">
-          <h1>YELLOW DRAGONS</h1>
-          <p class="intro">MADE BY 김모도</p>
-        </div>
+      <div class="home-main">
+        <h1 class="home-title">YELLOW DRAGONS</h1>
 
+        <nav class="menu-card">
+          <a class="nav-btn" href="./schedule.html">2026시즌 일정/결과</a>
+          <a class="nav-btn" href="./rank.html">2026시즌 순위</a>
+          <a class="nav-btn" href="./board.html">자유게시판</a>
+          <a class="nav-btn" href="./gallery.html">사진첩</a>
+        </nav>
+
+        <div class="bottom-character-wrap">
+          <img
+            class="bottom-character"
+            src="./images/character-left.png"
+            alt=""
+          />
+        </div>
+      </div>
+
+      <footer class="home-footer">
         <div id="board-auth" class="board-auth-bar board-auth-bar--home" aria-label="계정">
           <div id="board-auth-guest" class="board-auth-bar__guest">
             <button type="button" id="board-google-login" class="board-auth-bar__login-btn">
@@ -63,22 +77,8 @@
             ></p>
           </div>
         </div>
-      </header>
-
-      <nav class="menu-card">
-        <a class="nav-btn" href="./schedule.html">2026시즌 일정/결과</a>
-        <a class="nav-btn" href="./rank.html">2026시즌 순위</a>
-        <a class="nav-btn" href="./board.html">자유게시판</a>
-        <a class="nav-btn" href="./gallery.html">사진첩</a>
-      </nav>
-
-      <div class="bottom-character-wrap">
-        <img
-          class="bottom-character"
-          src="./images/character-left.png"
-          alt=""
-        />
-      </div>
+        <p class="home-credit">MADE BY 도모</p>
+      </footer>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
