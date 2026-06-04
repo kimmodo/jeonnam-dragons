@@ -425,7 +425,7 @@ h2,
 .home-title {
   margin: 0 0 var(--space-lg);
   padding: var(--space-lg) var(--space-sm) 0;
-  font-size: 2rem;
+  font-size: 3.5rem;
   font-weight: bold;
   letter-spacing: 0.06em;
   text-align: center;
@@ -1280,7 +1280,7 @@ body.gallery-modal-open {
   }
 
   .home-title {
-    font-size: 1.6rem;
+    font-size: 4rem;
     padding-top: var(--space-md);
     letter-spacing: 0.04em;
   }
