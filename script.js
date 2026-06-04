@@ -1004,6 +1004,15 @@ function getPostViewCount(post) {
   return Math.max(0, count);
 }
 
+function getPostCommentCount(post) {
+  const count = Number(post?.commentCount);
+  if (Number.isNaN(count)) {
+    return 0;
+  }
+
+  return Math.max(0, count);
+}
+
 function isPostLikedByUser(postId) {
   return boardLikeStates.get(postId) === true;
 }
@@ -1094,6 +1103,7 @@ function createBoardListItem(postId, post) {
     ? '<span class="board-notice-badge">📌 공지</span>'
     : "";
   const likeCount = getPostLikeCount(post);
+  const commentCount = getPostCommentCount(post);
   const viewCount = getPostViewCount(post);
 
   return `
@@ -1106,7 +1116,7 @@ function createBoardListItem(postId, post) {
       <p class="board-list-meta">
         ${escapeHtml(getBoardDisplayAuthor(post))} · ${formatBoardDate(post.createdAt)}
       </p>
-      <p class="board-list-stats">💛 ${likeCount} · 조회 ${viewCount}</p>
+      <p class="board-list-stats">💛 ${likeCount} · 댓글 ${commentCount} · 조회 ${viewCount}</p>
     </a>
   `;
 }
@@ -1423,27 +1433,69 @@ async function loadPostComments(
   }
 }
 
+async function syncPostCommentCount(db, postId) {
+  const postSnap = await db.collection(BOARD_POSTS_COLLECTION).doc(postId).get();
+
+  if (!postSnap.exists) {
+    return;
+  }
+
+  updateBoardPostInCache(postId, postSnap.data());
+
+  if (boardDetailPostId === postId) {
+    boardDetailPostData = postSnap.data();
+  }
+}
+
 async function saveBoardComment(db, postId, values, uid, authorNickname) {
-  await db
-    .collection(BOARD_POSTS_COLLECTION)
-    .doc(postId)
-    .collection("comments")
-    .add({
+  const postRef = db.collection(BOARD_POSTS_COLLECTION).doc(postId);
+  const commentRef = postRef.collection("comments").doc();
+
+  await db.runTransaction(async (transaction) => {
+    const postSnap = await transaction.get(postRef);
+
+    if (!postSnap.exists) {
+      throw new Error("게시글이 없습니다.");
+    }
+
+    const currentCount = getPostCommentCount(postSnap.data());
+
+    transaction.set(commentRef, {
       author: authorNickname,
       authorNickname,
       content: values.content,
       uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
+    transaction.update(postRef, {
+      commentCount: currentCount + 1,
+    });
+  });
+
+  await syncPostCommentCount(db, postId);
 }
 
 async function deleteBoardComment(db, postId, commentId) {
-  await db
-    .collection(BOARD_POSTS_COLLECTION)
-    .doc(postId)
-    .collection("comments")
-    .doc(commentId)
-    .delete();
+  const postRef = db.collection(BOARD_POSTS_COLLECTION).doc(postId);
+  const commentRef = postRef.collection("comments").doc(commentId);
+
+  await db.runTransaction(async (transaction) => {
+    const postSnap = await transaction.get(postRef);
+    const commentSnap = await transaction.get(commentRef);
+
+    if (!commentSnap.exists) {
+      return;
+    }
+
+    const currentCount = getPostCommentCount(postSnap.data());
+
+    transaction.delete(commentRef);
+    transaction.update(postRef, {
+      commentCount: Math.max(0, currentCount - 1),
+    });
+  });
+
+  await syncPostCommentCount(db, postId);
 }
 
 function isBoardNoticePost(post) {
@@ -1666,6 +1718,7 @@ async function saveBoardPost(db, values, uid, authorNickname) {
     uid,
     isNotice: Boolean(values.isNotice),
     likeCount: 0,
+    commentCount: 0,
     viewCount: 0,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
