@@ -897,10 +897,15 @@ function closeBoardWriteForm(resetForm = true) {
   }
 }
 
+function getBoardWelcomeText() {
+  const nickname = getBoardNickname();
+  return nickname ? `${nickname}님 환영합니다` : "환영합니다";
+}
+
 function updateBoardAuthUi() {
   const guestEl = document.getElementById("board-auth-guest");
   const userEl = document.getElementById("board-auth-user");
-  const nicknameEl = document.getElementById("board-current-nickname");
+  const welcomeEl = document.getElementById("board-auth-welcome");
   const nicknameInputEl = document.getElementById("board-nickname-input");
   const isLoggedIn = Boolean(boardAuthUser);
 
@@ -918,8 +923,8 @@ function updateBoardAuthUi() {
     closeBoardNicknamePanel();
   }
 
-  if (isLoggedIn && nicknameEl) {
-    nicknameEl.textContent = getBoardNickname() || "-";
+  if (isLoggedIn && welcomeEl) {
+    welcomeEl.textContent = getBoardWelcomeText();
   }
 
   if (isLoggedIn && nicknameInputEl) {
@@ -982,22 +987,28 @@ function closeBoardNicknamePanel() {
 
 function bindBoardNicknameToggle() {
   const toggleBtn = document.getElementById("board-nickname-toggle");
-  if (!toggleBtn) {
-    return;
+  const cancelBtn = document.getElementById("board-nickname-cancel");
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", () => {
+      if (!boardAuthUser) {
+        return;
+      }
+
+      if (isBoardNicknamePanelOpen()) {
+        closeBoardNicknamePanel();
+        return;
+      }
+
+      openBoardNicknamePanel();
+    });
   }
 
-  toggleBtn.addEventListener("click", () => {
-    if (!boardAuthUser) {
-      return;
-    }
-
-    if (isBoardNicknamePanelOpen()) {
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => {
       closeBoardNicknamePanel();
-      return;
-    }
-
-    openBoardNicknamePanel();
-  });
+    });
+  }
 }
 
 const BOARD_DEFAULT_NICKNAME = "전남팬";

@@ -585,69 +585,76 @@ body.gallery-modal-open {
   text-align: left;
 }
 
-.board-auth {
-  margin-top: var(--space-md);
-  padding: var(--space-md);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-panel-alt);
-}
-
-.board-auth--home {
-  margin-top: var(--space-md);
-}
-
-.board-auth--compact {
-  margin-top: var(--space-lg);
-  padding: 10px 12px;
-}
-
-.board-auth-guest--compact,
-.board-auth-user--compact {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-}
-
-.board-auth-guest--compact .board-auth-message {
-  margin: 0;
-  flex: 1 1 auto;
-  min-width: 0;
+.board-auth-bar {
+  margin: var(--space-sm) 0;
+  padding: 0;
   font-size: 0.82rem;
   line-height: 1.4;
+  color: var(--color-text);
 }
 
-.board-auth-user-line {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 0.84rem;
+.board-auth-bar--home {
+  margin-top: var(--space-md);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
 }
 
-.board-auth-label {
-  color: var(--color-text-muted, #555);
-  font-size: 0.78rem;
+.board-auth-bar__guest.is-hidden,
+.board-auth-bar__user.is-hidden,
+.board-write-section.is-hidden,
+.board-write-hint.is-hidden,
+#board-nickname-panel.is-hidden {
+  display: none;
 }
 
-.board-auth-actions {
+.board-auth-bar__guest,
+.board-auth-bar__row,
+.board-nickname-form--inline {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
+  gap: 6px 10px;
 }
 
-.board-auth-actions--stack {
-  display: grid;
-  gap: var(--space-sm);
+.board-auth-bar__welcome {
+  font-size: 0.84rem;
+  font-weight: 600;
 }
 
-.board-auth-btn--inline {
+.board-auth-bar__sep {
+  color: var(--color-border);
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+.board-auth-bar__links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.board-auth-bar__login-btn {
   display: inline-block;
-  width: auto;
-  margin-top: 0;
-  padding: 6px 12px;
-  font-size: 0.8rem;
+  padding: 5px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-panel);
+  color: var(--color-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.board-auth-bar__mini-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--color-text);
+  border-radius: 6px;
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .board-auth-link-btn {
@@ -655,96 +662,39 @@ body.gallery-modal-open {
   border: none;
   background: none;
   color: var(--color-text);
-  font-size: 0.8rem;
-  font-weight: bold;
+  font-size: 0.78rem;
+  font-weight: 600;
   text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
 }
 
-.board-auth--compact .board-nickname-panel {
-  flex-basis: 100%;
-  width: 100%;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--color-border);
+.board-auth-bar__panel {
+  margin-top: 6px;
 }
 
-.board-auth--compact .board-nickname-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin-top: 0;
-}
-
-.board-auth--compact .board-nickname-form .board-input {
-  flex: 1 1 140px;
+.board-nickname-form--inline .board-input--sm {
+  flex: 1 1 120px;
   min-width: 0;
+  max-width: 200px;
+  padding: 6px 8px;
+  font-size: 0.82rem;
 }
 
-.board-auth--home .board-nickname-panel {
-  margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--color-border);
-}
-
-.board-auth-guest.is-hidden,
-.board-auth-user.is-hidden,
-.board-write-section.is-hidden,
-.board-write-hint.is-hidden,
-.board-nickname-panel.is-hidden {
-  display: none;
-}
-
-.board-auth-message {
-  margin: 0 0 var(--space-sm);
-  font-size: 0.88rem;
-  line-height: var(--line-height);
-}
-
-.board-auth-nickname {
-  margin: 0 0 var(--space-sm);
-  font-size: 0.9rem;
-}
-
-.board-auth-btn {
-  display: block;
-  width: 100%;
-  margin-top: var(--space-sm);
-  padding: 12px;
-  border: 2px solid var(--color-text);
-  border-radius: 10px;
-  background: var(--color-text);
-  color: var(--color-surface);
-  font-size: 0.9rem;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: var(--shadow-btn);
-}
-
-.board-auth-btn--secondary {
-  background: var(--color-panel);
+.board-auth-status--inline {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
   color: var(--color-text);
 }
 
-.board-nickname-form {
-  display: grid;
-  gap: var(--space-sm);
-  margin-top: var(--space-sm);
-}
-
-.board-auth-status {
-  margin-top: var(--space-sm);
-  padding: 10px;
-  font-size: 0.85rem;
-  text-align: center;
-  border-radius: 8px;
-  background: var(--color-panel-highlight);
-  border: 1px solid var(--color-border);
-}
-
-.board-auth-status.is-hidden {
+.board-auth-status--inline.is-hidden {
   display: none;
+}
+
+.board-page .board-auth-bar {
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .board-list-header {
@@ -752,7 +702,7 @@ body.gallery-modal-open {
   justify-content: space-between;
   align-items: center;
   gap: var(--space-sm);
-  margin: var(--space-lg) 0 var(--space-sm);
+  margin: var(--space-md) 0 var(--space-sm);
 }
 
 .board-list-heading {
@@ -1420,12 +1370,14 @@ body.gallery-modal-open {
 
   .board-comment-input,
   .board-comment-textarea,
-  .board-nickname-form .board-input {
+  .board-nickname-form--inline .board-input--sm {
     font-size: 16px;
+    max-width: none;
   }
 
-  .board-auth-btn {
-    min-height: 44px;
+  .board-auth-bar__login-btn,
+  .board-auth-bar__mini-btn {
+    min-height: 36px;
   }
 }
 

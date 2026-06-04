@@ -19,6 +19,56 @@
           <p class="subtitle">전남은 하나다</p>
           <p class="intro">MADE BY 김모도</p>
         </div>
+
+        <div id="board-auth" class="board-auth-bar board-auth-bar--home" aria-label="계정">
+          <div id="board-auth-guest" class="board-auth-bar__guest">
+            <button type="button" id="board-google-login" class="board-auth-bar__login-btn">
+              Google 로그인
+            </button>
+          </div>
+          <div id="board-auth-user" class="board-auth-bar__user is-hidden">
+            <div class="board-auth-bar__row">
+              <span id="board-auth-welcome" class="board-auth-bar__welcome"></span>
+              <span class="board-auth-bar__sep" aria-hidden="true">·</span>
+              <span class="board-auth-bar__links">
+                <button
+                  type="button"
+                  id="board-nickname-toggle"
+                  class="board-auth-link-btn"
+                  aria-expanded="false"
+                >
+                  닉네임 변경
+                </button>
+                <span class="board-auth-bar__sep" aria-hidden="true">·</span>
+                <button type="button" id="board-logout" class="board-auth-link-btn">
+                  로그아웃
+                </button>
+              </span>
+            </div>
+          </div>
+          <div id="board-nickname-panel" class="board-auth-bar__panel is-hidden">
+            <form id="board-nickname-form" class="board-nickname-form--inline" novalidate>
+              <input
+                id="board-nickname-input"
+                class="board-input board-input--sm"
+                type="text"
+                maxlength="20"
+                placeholder="닉네임"
+                autocomplete="nickname"
+              />
+              <button type="submit" class="board-auth-bar__mini-btn">저장</button>
+              <button type="button" id="board-nickname-cancel" class="board-auth-link-btn">
+                취소
+              </button>
+            </form>
+            <p
+              id="board-nickname-status"
+              class="board-auth-status--inline is-hidden"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </div>
+        </div>
       </header>
 
       <nav class="menu-card">
@@ -27,60 +77,6 @@
         <a class="nav-btn" href="./board.html">자유게시판</a>
         <a class="nav-btn" href="./gallery.html">사진첩</a>
       </nav>
-
-      <section id="board-auth" class="board-auth board-auth--home" aria-label="계정">
-        <div id="board-auth-guest" class="board-auth-guest">
-          <p class="board-auth-message">
-            Google 로그인 후 자유게시판에 글과 댓글을 남길 수 있습니다.
-          </p>
-          <button type="button" id="board-google-login" class="board-auth-btn">
-            Google 로그인
-          </button>
-        </div>
-
-        <div id="board-auth-user" class="board-auth-user is-hidden">
-          <p class="board-auth-nickname">
-            현재 닉네임:
-            <strong id="board-current-nickname">-</strong>
-          </p>
-          <div class="board-auth-actions board-auth-actions--stack">
-            <button
-              type="button"
-              id="board-nickname-toggle"
-              class="board-auth-btn board-auth-btn--secondary"
-              aria-expanded="false"
-            >
-              닉네임 변경
-            </button>
-            <button
-              type="button"
-              id="board-logout"
-              class="board-auth-btn board-auth-btn--secondary"
-            >
-              로그아웃
-            </button>
-          </div>
-          <div id="board-nickname-panel" class="board-nickname-panel is-hidden">
-            <form id="board-nickname-form" class="board-nickname-form">
-              <input
-                id="board-nickname-input"
-                class="board-input"
-                type="text"
-                maxlength="20"
-                placeholder="사이트 닉네임"
-                autocomplete="nickname"
-              />
-              <button type="submit" class="board-auth-btn">닉네임 저장</button>
-            </form>
-            <p
-              id="board-nickname-status"
-              class="board-auth-status is-hidden"
-              role="status"
-              aria-live="polite"
-            ></p>
-          </div>
-        </div>
-      </section>
 
       <div class="bottom-character-wrap">
         <img

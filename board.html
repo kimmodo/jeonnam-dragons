@@ -14,6 +14,56 @@
         <h1>자유게시판</h1>
         <p class="desc">전남드래곤즈 팬들의 자유 게시판입니다.</p>
 
+        <div id="board-auth" class="board-auth-bar" aria-label="계정">
+          <div id="board-auth-guest" class="board-auth-bar__guest">
+            <button type="button" id="board-google-login" class="board-auth-bar__login-btn">
+              Google 로그인
+            </button>
+          </div>
+          <div id="board-auth-user" class="board-auth-bar__user is-hidden">
+            <div class="board-auth-bar__row">
+              <span id="board-auth-welcome" class="board-auth-bar__welcome"></span>
+              <span class="board-auth-bar__sep" aria-hidden="true">·</span>
+              <span class="board-auth-bar__links">
+                <button
+                  type="button"
+                  id="board-nickname-toggle"
+                  class="board-auth-link-btn"
+                  aria-expanded="false"
+                >
+                  닉네임 변경
+                </button>
+                <span class="board-auth-bar__sep" aria-hidden="true">·</span>
+                <button type="button" id="board-logout" class="board-auth-link-btn">
+                  로그아웃
+                </button>
+              </span>
+            </div>
+          </div>
+          <div id="board-nickname-panel" class="board-auth-bar__panel is-hidden">
+            <form id="board-nickname-form" class="board-nickname-form--inline" novalidate>
+              <input
+                id="board-nickname-input"
+                class="board-input board-input--sm"
+                type="text"
+                maxlength="20"
+                placeholder="닉네임"
+                autocomplete="nickname"
+              />
+              <button type="submit" class="board-auth-bar__mini-btn">저장</button>
+              <button type="button" id="board-nickname-cancel" class="board-auth-link-btn">
+                취소
+              </button>
+            </form>
+            <p
+              id="board-nickname-status"
+              class="board-auth-status--inline is-hidden"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </div>
+        </div>
+
         <div class="board-list-header">
           <h2 class="section-subtitle board-list-heading">게시글 목록</h2>
           <button
@@ -101,54 +151,6 @@
           class="board-pagination is-hidden"
           aria-label="게시글 페이지"
         ></nav>
-
-        <div id="board-auth" class="board-auth board-auth--compact" aria-label="계정">
-          <div id="board-auth-guest" class="board-auth-guest board-auth-guest--compact">
-            <span class="board-auth-message">로그인 후 글·댓글 작성</span>
-            <button type="button" id="board-google-login" class="board-auth-btn board-auth-btn--inline">
-              로그인
-            </button>
-          </div>
-
-          <div id="board-auth-user" class="board-auth-user board-auth-user--compact is-hidden">
-            <span class="board-auth-user-line">
-              <span class="board-auth-label">닉네임</span>
-              <strong id="board-current-nickname">-</strong>
-            </span>
-            <div class="board-auth-actions">
-              <button
-                type="button"
-                id="board-nickname-toggle"
-                class="board-auth-link-btn"
-                aria-expanded="false"
-              >
-                닉네임 변경
-              </button>
-              <button type="button" id="board-logout" class="board-auth-link-btn">
-                로그아웃
-              </button>
-            </div>
-            <div id="board-nickname-panel" class="board-nickname-panel is-hidden">
-              <form id="board-nickname-form" class="board-nickname-form">
-                <input
-                  id="board-nickname-input"
-                  class="board-input"
-                  type="text"
-                  maxlength="20"
-                  placeholder="사이트 닉네임"
-                  autocomplete="nickname"
-                />
-                <button type="submit" class="board-auth-btn board-auth-btn--inline">저장</button>
-              </form>
-              <p
-                id="board-nickname-status"
-                class="board-auth-status is-hidden"
-                role="status"
-                aria-live="polite"
-              ></p>
-            </div>
-          </div>
-        </div>
       </section>
     </main>
 
