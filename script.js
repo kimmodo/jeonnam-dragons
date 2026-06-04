@@ -922,6 +922,38 @@ function getPostLikeCount(post) {
   return Math.max(0, count);
 }
 
+function getPostViewCount(post) {
+  const count = Number(post?.viewCount);
+  if (Number.isNaN(count)) {
+    return 0;
+  }
+
+  return Math.max(0, count);
+}
+
+async function incrementPostViewCounts(db, posts) {
+  if (!posts.length) {
+    return;
+  }
+
+  await Promise.all(
+    posts.map(async (post) => {
+      const postRef = db.collection(BOARD_POSTS_COLLECTION).doc(post.id);
+
+      try {
+        await postRef.update({
+          viewCount: firebase.firestore.FieldValue.increment(1),
+        });
+        updateBoardPostInCache(post.id, {
+          viewCount: getPostViewCount(post.data) + 1,
+        });
+      } catch (error) {
+        console.error("[board] 조회수 증가 실패:", post.id, error);
+      }
+    })
+  );
+}
+
 function isPostLikedByUser(postId) {
   return boardLikeStates.get(postId) === true;
 }
@@ -1041,17 +1073,21 @@ function createBoardPostCard(
   const likeTitleAttr = isLoggedIn
     ? ""
     : ` title="${BOARD_LOGIN_REQUIRED_MESSAGE}"`;
-  const likeHtml = `
-    <div class="board-like-wrap">
-      <button
-        type="button"
-        class="board-like-btn${isLiked ? " is-active" : ""}"
-        data-action="toggle-like"
-        data-id="${postId}"${likeDisabledAttr}${likeTitleAttr}
-      >
-        💛 좋아요
-      </button>
-      <span class="board-like-count">${likeCount}</span>
+  const viewCount = getPostViewCount(post);
+  const statsHtml = `
+    <div class="board-post-stats">
+      <div class="board-like-wrap">
+        <button
+          type="button"
+          class="board-like-btn${isLiked ? " is-active" : ""}"
+          data-action="toggle-like"
+          data-id="${postId}"${likeDisabledAttr}${likeTitleAttr}
+        >
+          💛 좋아요
+        </button>
+        <span class="board-like-count">${likeCount}</span>
+      </div>
+      <span class="board-view-count">조회 ${viewCount}</span>
     </div>
   `;
   const editForm = isOwner
@@ -1093,7 +1129,7 @@ function createBoardPostCard(
           ${escapeHtml(getBoardDisplayAuthor(post))} · ${formatBoardDate(post.createdAt)}
         </p>
         <p class="board-post-content">${escapeHtml(post.content || "")}</p>
-        ${likeHtml}
+        ${statsHtml}
         ${postActions}
       </div>
       ${editForm}
@@ -1470,6 +1506,7 @@ async function renderBoardPostsPage(db, currentUid, isAdminUser, isLoggedIn) {
   );
   const displayPosts = [...boardNoticePostsCache, ...pageRegularPosts];
 
+  await incrementPostViewCounts(db, displayPosts);
   await loadBoardLikeStates(db, displayPosts, currentUid);
 
   const noticeHtml = hasNotices
@@ -1582,6 +1619,7 @@ async function saveBoardPost(db, values, uid, authorNickname) {
     uid,
     isNotice: Boolean(values.isNotice),
     likeCount: 0,
+    viewCount: 0,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
 }

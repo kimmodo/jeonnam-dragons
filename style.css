@@ -865,11 +865,24 @@ body.gallery-modal-open {
   word-break: break-word;
 }
 
+.board-post-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: var(--space-sm);
+}
+
 .board-like-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: var(--space-sm);
+}
+
+.board-view-count {
+  font-size: 0.82rem;
+  opacity: 0.88;
+  white-space: nowrap;
 }
 
 .board-like-btn {
