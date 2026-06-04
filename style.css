@@ -549,8 +549,8 @@ h2,
 
 .home-game-card {
   width: 100%;
-  padding: 14px 12px;
-  text-align: left;
+  padding: 10px 12px 11px;
+  text-align: center;
   background: var(--color-panel);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -565,48 +565,56 @@ h2,
   border-left: 3px solid var(--color-text);
 }
 
-.home-game-card__head {
+.home-game-card__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 }
 
-.home-game-card__title {
-  margin: 0 0 8px;
-  font-size: 0.95rem;
-  font-weight: bold;
+.home-game-card__label {
+  margin: 0 0 4px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  opacity: 0.72;
 }
 
-.home-game-card__head .home-game-card__title {
+.home-game-card__top .home-game-card__label {
   margin-bottom: 0;
 }
 
-.home-game-card__row {
-  margin: 5px 0;
-  font-size: 0.88rem;
-  line-height: 1.5;
+.home-game-card__main {
+  margin: 0 0 5px;
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1.25;
   word-break: keep-all;
 }
 
-.home-game-card__row strong {
-  display: inline-block;
-  min-width: 3.6em;
-  font-weight: bold;
+.home-game-card--next .home-game-card__main {
+  font-size: 1.28rem;
 }
 
-.home-game-card__meta {
-  margin: 8px 0 0;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  opacity: 0.75;
+.home-game-card__sub {
+  margin: 1px 0 0;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  opacity: 0.82;
+  word-break: keep-all;
+}
+
+.home-game-card .result-badge {
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  line-height: 1.2;
 }
 
 .home-game-card__empty {
-  margin: 0;
-  font-size: 0.88rem;
-  line-height: 1.5;
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
   opacity: 0.85;
 }
 

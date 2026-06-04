@@ -297,23 +297,32 @@ function getJeonnamHomeAwayLabel(game) {
   return "-";
 }
 
-function createHomeGameRow(label, value) {
-  return `<p class="home-game-card__row"><strong>${label}</strong> ${value}</p>`;
+function formatHomeShortDate(game) {
+  const parts = (game.game_date || "").split(".");
+  if (parts.length < 3) {
+    return game.game_date || "";
+  }
+
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+  const yoil = game.game_yoil ? ` (${game.game_yoil})` : "";
+
+  return `${month}.${day}${yoil}`;
 }
 
 function createHomeNextGameCard(game) {
   const timeText = formatGameTime(game.game_time);
-  const dateText = `${game.game_date}${game.game_yoil ? ` (${game.game_yoil})` : ""}`;
+  const shortDate = formatHomeShortDate(game);
+  const dateTimeText = timeText ? `${shortDate} ${timeText}` : shortDate;
+  const opponent = getJeonnamOpponent(game);
+  const fieldName = game.field_name || "-";
 
   return `
     <article class="home-game-card home-game-card--next">
-      <h2 class="home-game-card__title">다음 경기</h2>
-      ${createHomeGameRow("날짜", dateText)}
-      ${timeText ? createHomeGameRow("시간", timeText) : ""}
-      ${createHomeGameRow("상대", getJeonnamOpponent(game))}
-      ${createHomeGameRow("홈/원정", getJeonnamHomeAwayLabel(game))}
-      ${createHomeGameRow("경기장", game.field_name || "-")}
-      ${game.meet_name ? `<p class="home-game-card__meta">${game.meet_name}</p>` : ""}
+      <p class="home-game-card__label">NEXT</p>
+      <p class="home-game-card__main">VS ${opponent}</p>
+      <p class="home-game-card__sub">${dateTimeText}</p>
+      <p class="home-game-card__sub">${fieldName}</p>
     </article>
   `;
 }
@@ -324,29 +333,30 @@ function createHomePastGameCard(game) {
   const badgeHtml = result
     ? `<span class="result-badge ${badgeClass}">${result}</span>`
     : "";
-  const dateText = `${game.game_date}${game.game_yoil ? ` (${game.game_yoil})` : ""}`;
+  const shortDate = formatHomeShortDate(game);
   const scoreText = `${game.home_team_name} ${game.home_team_goal} : ${game.away_team_goal} ${game.away_team_name}`;
+  const homeAway = getJeonnamHomeAwayLabel(game);
+  const fieldName = game.field_name || "-";
+  const homeFieldText =
+    homeAway && homeAway !== "-" ? `${homeAway} · ${fieldName}` : fieldName;
 
   return `
     <article class="home-game-card home-game-card--past">
-      <div class="home-game-card__head">
-        <h2 class="home-game-card__title">최근 경기</h2>
+      <div class="home-game-card__top">
+        <p class="home-game-card__label">LAST</p>
         ${badgeHtml}
       </div>
-      ${createHomeGameRow("날짜", dateText)}
-      ${createHomeGameRow("상대", getJeonnamOpponent(game))}
-      ${createHomeGameRow("스코어", scoreText)}
-      ${createHomeGameRow("홈/원정", getJeonnamHomeAwayLabel(game))}
-      ${result ? createHomeGameRow("결과", result) : ""}
-      ${game.meet_name ? `<p class="home-game-card__meta">${game.meet_name}</p>` : ""}
+      <p class="home-game-card__main">${scoreText}</p>
+      <p class="home-game-card__sub">${shortDate}</p>
+      <p class="home-game-card__sub">${homeFieldText}</p>
     </article>
   `;
 }
 
-function createHomeGamePlaceholderCard(title, message, variant) {
+function createHomeGamePlaceholderCard(label, message, variant) {
   return `
     <article class="home-game-card home-game-card--${variant}">
-      <h2 class="home-game-card__title">${title}</h2>
+      <p class="home-game-card__label">${label}</p>
       <p class="home-game-card__empty">${message}</p>
     </article>
   `;
@@ -362,7 +372,7 @@ function renderHomeScheduleCards(pastGames, nextGames) {
 
   if (nextGames.length === 0) {
     nextEl.innerHTML = createHomeGamePlaceholderCard(
-      "다음 경기",
+      "NEXT",
       HOME_NEXT_EMPTY_MESSAGE,
       "next"
     );
@@ -372,7 +382,7 @@ function renderHomeScheduleCards(pastGames, nextGames) {
 
   if (pastGames.length === 0) {
     pastEl.innerHTML = createHomeGamePlaceholderCard(
-      "최근 경기",
+      "LAST",
       HOME_PAST_EMPTY_MESSAGE,
       "past"
     );
@@ -389,11 +399,11 @@ function renderHomeScheduleLoading() {
     return;
   }
 
-  const loadingCard = (title) =>
-    `<article class="home-game-card"><h2 class="home-game-card__title">${title}</h2><p class="home-game-card__empty">${HOME_SCHEDULE_LOADING_MESSAGE}</p></article>`;
+  const loadingCard = (label) =>
+    `<article class="home-game-card"><p class="home-game-card__label">${label}</p><p class="home-game-card__empty">${HOME_SCHEDULE_LOADING_MESSAGE}</p></article>`;
 
-  nextEl.innerHTML = loadingCard("다음 경기");
-  pastEl.innerHTML = loadingCard("최근 경기");
+  nextEl.innerHTML = loadingCard("NEXT");
+  pastEl.innerHTML = loadingCard("LAST");
 }
 
 function renderHomeScheduleError() {
@@ -404,11 +414,11 @@ function renderHomeScheduleError() {
     return;
   }
 
-  const errorCard = (title) =>
-    `<article class="home-game-card"><h2 class="home-game-card__title">${title}</h2><p class="home-game-card__empty">${HOME_SCHEDULE_ERROR_MESSAGE}</p></article>`;
+  const errorCard = (label) =>
+    `<article class="home-game-card"><p class="home-game-card__label">${label}</p><p class="home-game-card__empty">${HOME_SCHEDULE_ERROR_MESSAGE}</p></article>`;
 
-  nextEl.innerHTML = errorCard("다음 경기");
-  pastEl.innerHTML = errorCard("최근 경기");
+  nextEl.innerHTML = errorCard("NEXT");
+  pastEl.innerHTML = errorCard("LAST");
 }
 
 async function loadHomeScheduleFromApi() {
