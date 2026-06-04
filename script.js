@@ -702,6 +702,8 @@ const BOARD_NICKNAME_SAVE_ERROR_MESSAGE =
 const BOARD_NICKNAME_VALIDATION_MESSAGE = "닉네임을 입력해주세요.";
 const BOARD_GOOGLE_LOGIN_ERROR_MESSAGE =
   "Google 로그인에 실패했습니다. 다시 시도해주세요.";
+const BOARD_LIKE_ERROR_MESSAGE =
+  "좋아요 처리에 실패했습니다. 잠시 후 다시 시도해주세요.";
 const BOARD_COMMENT_SAVE_ERROR_MESSAGE =
   "댓글 등록에 실패했습니다. 잠시 후 다시 시도해주세요.";
 const BOARD_COMMENT_DELETE_ERROR_MESSAGE =
@@ -712,6 +714,7 @@ let boardRegularPostsCache = [];
 let boardCurrentPage = 1;
 let boardAuthUser = null;
 let boardUserProfile = null;
+let boardLikeStates = new Map();
 const BOARD_LOADING_MESSAGE = "게시글을 불러오는 중...";
 const BOARD_LOAD_ERROR_MESSAGE =
   "게시글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
@@ -910,6 +913,95 @@ function formatBoardDate(value) {
   });
 }
 
+function getPostLikeCount(post) {
+  const count = Number(post?.likeCount);
+  if (Number.isNaN(count)) {
+    return 0;
+  }
+
+  return Math.max(0, count);
+}
+
+function isPostLikedByUser(postId) {
+  return boardLikeStates.get(postId) === true;
+}
+
+async function loadBoardLikeStates(db, posts, uid) {
+  boardLikeStates = new Map();
+
+  if (!uid || !posts.length) {
+    return;
+  }
+
+  await Promise.all(
+    posts.map(async (post) => {
+      const likeSnap = await db
+        .collection(BOARD_POSTS_COLLECTION)
+        .doc(post.id)
+        .collection("likes")
+        .doc(uid)
+        .get();
+      boardLikeStates.set(post.id, likeSnap.exists);
+    })
+  );
+}
+
+function updateBoardPostInCache(postId, postData) {
+  for (const list of [boardNoticePostsCache, boardRegularPostsCache]) {
+    const item = list.find((post) => post.id === postId);
+    if (item) {
+      item.data = { ...item.data, ...postData };
+      return;
+    }
+  }
+}
+
+async function togglePostLike(db, postId, uid) {
+  const postRef = db.collection(BOARD_POSTS_COLLECTION).doc(postId);
+  const likeRef = postRef.collection("likes").doc(uid);
+
+  await db.runTransaction(async (transaction) => {
+    const postSnap = await transaction.get(postRef);
+    const likeSnap = await transaction.get(likeRef);
+
+    if (!postSnap.exists) {
+      throw new Error("게시글이 없습니다.");
+    }
+
+    const currentCount = getPostLikeCount(postSnap.data());
+
+    if (likeSnap.exists) {
+      transaction.delete(likeRef);
+      transaction.update(postRef, {
+        likeCount: Math.max(0, currentCount - 1),
+      });
+      return;
+    }
+
+    transaction.set(likeRef, {
+      uid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    transaction.update(postRef, {
+      likeCount: currentCount + 1,
+    });
+  });
+}
+
+async function syncPostLikeState(db, postId, uid) {
+  const postRef = db.collection(BOARD_POSTS_COLLECTION).doc(postId);
+  const postSnap = await postRef.get();
+
+  if (postSnap.exists) {
+    updateBoardPostInCache(postId, postSnap.data());
+  }
+
+  if (uid) {
+    const likeSnap = await postRef.collection("likes").doc(uid).get();
+    boardLikeStates.set(postId, likeSnap.exists);
+  }
+}
+
 function createBoardPostCard(
   postId,
   post,
@@ -943,6 +1035,25 @@ function createBoardPostCard(
   const postActions = actionButtons
     ? `<div class="board-post-actions">${actionButtons}</div>`
     : "";
+  const likeCount = getPostLikeCount(post);
+  const isLiked = isPostLikedByUser(postId);
+  const likeDisabledAttr = isLoggedIn ? "" : " disabled";
+  const likeTitleAttr = isLoggedIn
+    ? ""
+    : ` title="${BOARD_LOGIN_REQUIRED_MESSAGE}"`;
+  const likeHtml = `
+    <div class="board-like-wrap">
+      <button
+        type="button"
+        class="board-like-btn${isLiked ? " is-active" : ""}"
+        data-action="toggle-like"
+        data-id="${postId}"${likeDisabledAttr}${likeTitleAttr}
+      >
+        💛 좋아요
+      </button>
+      <span class="board-like-count">${likeCount}</span>
+    </div>
+  `;
   const editForm = isOwner
     ? `
       <form class="board-edit-form is-hidden" data-id="${postId}">
@@ -982,6 +1093,7 @@ function createBoardPostCard(
           ${escapeHtml(getBoardDisplayAuthor(post))} · ${formatBoardDate(post.createdAt)}
         </p>
         <p class="board-post-content">${escapeHtml(post.content || "")}</p>
+        ${likeHtml}
         ${postActions}
       </div>
       ${editForm}
@@ -1328,7 +1440,7 @@ function renderBoardPagination() {
   paginationEl.classList.remove("is-hidden");
 }
 
-function renderBoardPostsPage(currentUid, isAdminUser, isLoggedIn) {
+async function renderBoardPostsPage(db, currentUid, isAdminUser, isLoggedIn) {
   const listEl = document.getElementById("board-posts-list");
   const statusEl = document.getElementById("board-list-status");
   const paginationEl = document.getElementById("board-pagination");
@@ -1356,6 +1468,9 @@ function renderBoardPostsPage(currentUid, isAdminUser, isLoggedIn) {
     startIndex,
     startIndex + BOARD_PAGE_SIZE
   );
+  const displayPosts = [...boardNoticePostsCache, ...pageRegularPosts];
+
+  await loadBoardLikeStates(db, displayPosts, currentUid);
 
   const noticeHtml = hasNotices
     ? `<div class="board-notices-group" aria-label="공지글">${boardNoticePostsCache
@@ -1416,7 +1531,7 @@ async function loadBoardPosts(
     boardNoticePostsCache = noticePosts;
     boardRegularPostsCache = regularPosts;
     boardCurrentPage = page;
-    renderBoardPostsPage(currentUid, isAdminUser, isLoggedIn);
+    await renderBoardPostsPage(db, currentUid, isAdminUser, isLoggedIn);
   } catch (error) {
     console.error("[board] 게시글 불러오기 실패:", error);
     boardNoticePostsCache = [];
@@ -1436,7 +1551,7 @@ function bindBoardPagination(getBoardContext) {
     return;
   }
 
-  paginationEl.addEventListener("click", (event) => {
+  paginationEl.addEventListener("click", async (event) => {
     const pageBtn = event.target.closest("[data-page]");
     if (!pageBtn) {
       return;
@@ -1449,7 +1564,7 @@ function bindBoardPagination(getBoardContext) {
 
     const { currentUid, isAdminUser, isLoggedIn } = getBoardContext();
     boardCurrentPage = page;
-    renderBoardPostsPage(currentUid, isAdminUser, isLoggedIn);
+    await renderBoardPostsPage(db, currentUid, isAdminUser, isLoggedIn);
 
     const listEl = document.getElementById("board-posts-list");
     if (listEl) {
@@ -1466,6 +1581,7 @@ async function saveBoardPost(db, values, uid, authorNickname) {
     content: values.content,
     uid,
     isNotice: Boolean(values.isNotice),
+    likeCount: 0,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
 }
@@ -1495,6 +1611,33 @@ function bindBoardPostActions(db, getBoardContext) {
     }
 
     const action = actionBtn.dataset.action;
+
+    if (action === "toggle-like") {
+      const postId = actionBtn.dataset.id;
+      const cardEl = getBoardPostCard(postId);
+
+      if (!currentUid || !isLoggedIn) {
+        if (cardEl) {
+          setBoardPostStatus(cardEl, BOARD_LOGIN_REQUIRED_MESSAGE, true);
+        }
+        return;
+      }
+
+      actionBtn.disabled = true;
+
+      try {
+        await togglePostLike(db, postId, currentUid);
+        await syncPostLikeState(db, postId, currentUid);
+        await renderBoardPostsPage(db, currentUid, isAdminUser, isLoggedIn);
+      } catch (error) {
+        console.error("[board] 좋아요 처리 실패:", error);
+        if (cardEl) {
+          setBoardPostStatus(cardEl, BOARD_LIKE_ERROR_MESSAGE, true);
+        }
+      }
+
+      return;
+    }
 
     if (action === "toggle-comments") {
       const postId = actionBtn.dataset.id;
@@ -1768,7 +1911,12 @@ function initBoardPage() {
 
     updateBoardAuthUi();
     updateBoardAdminUi(currentUid);
-    renderBoardPostsPage(currentUid, isAdminUser, Boolean(currentUid));
+    await renderBoardPostsPage(
+      db,
+      currentUid,
+      isAdminUser,
+      Boolean(currentUid)
+    );
   }
 
   bindBoardPostActions(db, getBoardContext);
