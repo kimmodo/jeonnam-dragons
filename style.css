@@ -409,32 +409,19 @@ h2,
   white-space: nowrap;
 }
 
-/* index.html 메인 캐릭터 */
-.hero-card--with-character {
-  position: relative;
-  overflow: hidden;
-  padding: var(--space-lg) var(--space-md);
+/* index.html 메인 상단 카드 */
+#home-page .hero-card {
   text-align: center;
 }
 
-.hero-character {
-  position: absolute;
-  left: 12px;
-  bottom: 52px;
-  width: 78px;
-  max-height: 100px;
-  height: auto;
-  object-fit: contain;
-  object-position: left bottom;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.hero-text {
-  position: relative;
-  z-index: 2;
+#home-page .hero-text {
   width: 100%;
   text-align: center;
+}
+
+#home-page .hero-text h1 {
+  font-size: 1.75rem;
+  letter-spacing: 0.04em;
 }
 
 #home-page .board-auth-bar--home {
@@ -460,9 +447,8 @@ h2,
   align-items: center;
 }
 
-.hero-text h1,
-.hero-text .subtitle,
-.hero-text .intro {
+#home-page .hero-text h1,
+#home-page .hero-text .intro {
   white-space: nowrap;
 }
 
@@ -1275,25 +1261,13 @@ body.gallery-modal-open {
     margin-bottom: 12px;
   }
 
-  .hero-card--with-character {
-    padding: 14px 12px;
-  }
-
-  .hero-character {
-    width: 64px;
-    max-height: 84px;
-    left: 8px;
-    bottom: 48px;
-  }
-
-  .hero-text h1 {
-    font-size: 1.15rem;
+  #home-page .hero-text h1 {
+    font-size: 1.35rem;
     white-space: normal;
     line-height: 1.3;
   }
 
-  .hero-text .subtitle,
-  .hero-text .intro {
+  #home-page .hero-text .intro {
     white-space: normal;
     font-size: 0.88rem;
   }
@@ -1401,12 +1375,6 @@ body.gallery-modal-open {
   .board-auth-bar__login-btn,
   .board-auth-bar__mini-btn {
     min-height: 36px;
-  }
-}
-
-@media (max-width: 420px) {
-  .hero-character {
-    display: none;
   }
 }
 
