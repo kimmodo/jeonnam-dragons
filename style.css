@@ -531,28 +531,33 @@ h2,
   flex-direction: column;
   width: 100%;
   max-width: 400px;
-  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: 100svh;
+  min-height: -webkit-fill-available;
   margin-left: auto;
   margin-right: auto;
 }
 
 .site-header--home {
-  margin-bottom: var(--space-sm);
+  flex-shrink: 0;
+  margin-bottom: 4px;
 }
 
 .site-header--home .site-brand {
-  padding: var(--space-sm) 0 2px;
-  font-size: clamp(2.3rem, 10vw, 3.5rem);
+  padding: 2px 0 0;
+  font-size: clamp(2.8rem, 12vw, 4rem);
   font-weight: 900;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
+  line-height: 0.95;
 }
 
 #home-page .home-main {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   width: 100%;
+  min-height: 0;
 }
 
 .home-games-row {
@@ -658,7 +663,7 @@ h2,
   z-index: 2;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
@@ -677,7 +682,8 @@ h2,
 }
 
 #home-page .bottom-character-wrap {
-  margin-top: 4px;
+  margin-top: 0;
+  margin-bottom: 0;
   padding: 0;
 }
 
@@ -689,12 +695,13 @@ h2,
 .home-footer {
   flex-shrink: 0;
   margin-top: auto;
-  padding-top: var(--space-md);
+  padding-top: 6px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
   text-align: center;
 }
 
 .home-credit {
-  margin: var(--space-sm) 0 0;
+  margin: 4px 0 0;
   font-size: 0.72rem;
   color: rgba(17, 17, 17, 0.5);
   letter-spacing: 0.02em;
@@ -1567,16 +1574,38 @@ body.gallery-modal-open {
     letter-spacing: 0.04em;
   }
 
+  #home-page {
+    min-height: 100dvh;
+    min-height: 100svh;
+  }
+
+  .site-header--home {
+    margin-bottom: 2px;
+  }
+
   .site-header--home .site-brand {
-    font-size: clamp(2.3rem, 10vw, 3.5rem);
+    font-size: clamp(2.8rem, 12vw, 4rem);
+    line-height: 0.95;
+    letter-spacing: 0.03em;
+    padding-top: 0;
   }
 
   .home-footer {
-    padding-top: var(--space-sm);
+    padding-top: 4px;
+    padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .home-credit {
+    margin-top: 3px;
   }
 
   #home-page .home-main {
-    gap: 8px;
+    gap: 6px;
+  }
+
+  #home-page .bottom-character-wrap {
+    margin-top: 0;
+    padding-bottom: 0;
   }
 
   .home-game-card {
@@ -1671,7 +1700,8 @@ body.gallery-modal-open {
   }
 
   #home-page .bottom-character-wrap {
-    margin-top: 4px;
+    margin-top: 0;
+    margin-bottom: 0;
     padding-bottom: 0;
   }
 
