@@ -297,6 +297,13 @@ function getJeonnamHomeAwayLabel(game) {
   return "-";
 }
 
+function getHomeMatchupText(game) {
+  const home = game.home_team_name || "-";
+  const away = game.away_team_name || "-";
+
+  return `${home} vs ${away}`;
+}
+
 function formatHomeShortDate(game) {
   const parts = (game.game_date || "").split(".");
   if (parts.length < 3) {
@@ -314,17 +321,16 @@ function createHomeNextGameCard(game) {
   const timeText = formatGameTime(game.game_time);
   const shortDate = formatHomeShortDate(game);
   const dateTimeText = timeText ? `${shortDate} ${timeText}` : shortDate;
-  const opponent = getJeonnamOpponent(game);
+  const matchupText = getHomeMatchupText(game);
   const fieldName = game.field_name || "-";
 
-  return `
-    <article class="home-game-card home-game-card--next">
-      <p class="home-game-card__label">NEXT</p>
-      <p class="home-game-card__main">VS ${opponent}</p>
-      <p class="home-game-card__sub">${dateTimeText}</p>
-      <p class="home-game-card__sub">${fieldName}</p>
-    </article>
-  `;
+  return createHomeGameCardHtml({
+    label: "NEXT",
+    variant: "next",
+    topRightHtml: '<span class="home-game-card__badge-slot" aria-hidden="true"></span>',
+    mainHtml: matchupText,
+    subHtml: `<p class="home-game-card__sub">${dateTimeText}</p><p class="home-game-card__sub">${fieldName}</p>`,
+  });
 }
 
 function createHomePastGameCard(game) {
@@ -332,23 +338,29 @@ function createHomePastGameCard(game) {
   const badgeClass = getResultBadgeClass(result);
   const badgeHtml = result
     ? `<span class="result-badge ${badgeClass}">${result}</span>`
-    : "";
+    : '<span class="home-game-card__badge-slot" aria-hidden="true"></span>';
   const shortDate = formatHomeShortDate(game);
   const scoreText = `${game.home_team_name} ${game.home_team_goal} : ${game.away_team_goal} ${game.away_team_name}`;
-  const homeAway = getJeonnamHomeAwayLabel(game);
   const fieldName = game.field_name || "-";
-  const homeFieldText =
-    homeAway && homeAway !== "-" ? `${homeAway} · ${fieldName}` : fieldName;
 
+  return createHomeGameCardHtml({
+    label: "LAST",
+    variant: "past",
+    topRightHtml: badgeHtml,
+    mainHtml: scoreText,
+    subHtml: `<p class="home-game-card__sub">${shortDate}</p><p class="home-game-card__sub">${fieldName}</p>`,
+  });
+}
+
+function createHomeGameCardHtml({ label, variant, topRightHtml, mainHtml, subHtml }) {
   return `
-    <article class="home-game-card home-game-card--past">
+    <article class="home-game-card home-game-card--${variant}">
       <div class="home-game-card__top">
-        <p class="home-game-card__label">LAST</p>
-        ${badgeHtml}
+        <p class="home-game-card__label">${label}</p>
+        ${topRightHtml}
       </div>
-      <p class="home-game-card__main">${scoreText}</p>
-      <p class="home-game-card__sub">${shortDate}</p>
-      <p class="home-game-card__sub">${homeFieldText}</p>
+      <p class="home-game-card__main">${mainHtml}</p>
+      ${subHtml}
     </article>
   `;
 }
@@ -356,7 +368,10 @@ function createHomePastGameCard(game) {
 function createHomeGamePlaceholderCard(label, message, variant) {
   return `
     <article class="home-game-card home-game-card--${variant}">
-      <p class="home-game-card__label">${label}</p>
+      <div class="home-game-card__top">
+        <p class="home-game-card__label">${label}</p>
+        <span class="home-game-card__badge-slot" aria-hidden="true"></span>
+      </div>
       <p class="home-game-card__empty">${message}</p>
     </article>
   `;
@@ -400,7 +415,7 @@ function renderHomeScheduleLoading() {
   }
 
   const loadingCard = (label) =>
-    `<article class="home-game-card"><p class="home-game-card__label">${label}</p><p class="home-game-card__empty">${HOME_SCHEDULE_LOADING_MESSAGE}</p></article>`;
+    createHomeGamePlaceholderCard(label, HOME_SCHEDULE_LOADING_MESSAGE, label === "NEXT" ? "next" : "past");
 
   nextEl.innerHTML = loadingCard("NEXT");
   pastEl.innerHTML = loadingCard("LAST");
@@ -415,7 +430,7 @@ function renderHomeScheduleError() {
   }
 
   const errorCard = (label) =>
-    `<article class="home-game-card"><p class="home-game-card__label">${label}</p><p class="home-game-card__empty">${HOME_SCHEDULE_ERROR_MESSAGE}</p></article>`;
+    createHomeGamePlaceholderCard(label, HOME_SCHEDULE_ERROR_MESSAGE, label === "NEXT" ? "next" : "past");
 
   nextEl.innerHTML = errorCard("NEXT");
   pastEl.innerHTML = errorCard("LAST");
