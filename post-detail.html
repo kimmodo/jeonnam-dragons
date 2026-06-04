@@ -11,45 +11,51 @@
       <a class="back-link" href="./board.html">← 게시판 목록</a>
 
       <section class="content-card board-page post-detail-page">
-        <div id="board-auth" class="board-auth">
-          <div id="board-auth-guest" class="board-auth-guest">
-            <p class="board-auth-message">
-              Google 로그인 후 글과 댓글을 작성할 수 있습니다.
-            </p>
-            <button type="button" id="board-google-login" class="btn board-auth-btn">
-              Google 로그인
+        <div id="board-auth" class="board-auth board-auth--compact" aria-label="계정">
+          <div id="board-auth-guest" class="board-auth-guest board-auth-guest--compact">
+            <span class="board-auth-message">로그인 후 글·댓글 작성</span>
+            <button type="button" id="board-google-login" class="board-auth-btn board-auth-btn--inline">
+              로그인
             </button>
           </div>
 
-          <div id="board-auth-user" class="board-auth-user is-hidden">
-            <p class="board-auth-nickname">
-              현재 닉네임:
+          <div id="board-auth-user" class="board-auth-user board-auth-user--compact is-hidden">
+            <span class="board-auth-user-line">
+              <span class="board-auth-label">닉네임</span>
               <strong id="board-current-nickname">-</strong>
-            </p>
-            <button
-              type="button"
-              id="board-logout"
-              class="board-auth-btn board-auth-btn--secondary"
-            >
-              로그아웃
-            </button>
-            <form id="board-nickname-form" class="board-nickname-form">
-              <input
-                id="board-nickname-input"
-                class="board-input"
-                type="text"
-                maxlength="20"
-                placeholder="사이트 닉네임"
-                autocomplete="nickname"
-              />
-              <button type="submit" class="board-auth-btn">닉네임 저장</button>
-            </form>
-            <p
-              id="board-nickname-status"
-              class="board-auth-status is-hidden"
-              role="status"
-              aria-live="polite"
-            ></p>
+            </span>
+            <div class="board-auth-actions">
+              <button
+                type="button"
+                id="board-nickname-toggle"
+                class="board-auth-link-btn"
+                aria-expanded="false"
+              >
+                닉네임 변경
+              </button>
+              <button type="button" id="board-logout" class="board-auth-link-btn">
+                로그아웃
+              </button>
+            </div>
+            <div id="board-nickname-panel" class="board-nickname-panel is-hidden">
+              <form id="board-nickname-form" class="board-nickname-form">
+                <input
+                  id="board-nickname-input"
+                  class="board-input"
+                  type="text"
+                  maxlength="20"
+                  placeholder="사이트 닉네임"
+                  autocomplete="nickname"
+                />
+                <button type="submit" class="board-auth-btn board-auth-btn--inline">저장</button>
+              </form>
+              <p
+                id="board-nickname-status"
+                class="board-auth-status is-hidden"
+                role="status"
+                aria-live="polite"
+              ></p>
+            </div>
           </div>
         </div>
 

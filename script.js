@@ -751,6 +751,14 @@ function isBoardPage() {
   );
 }
 
+function isIndexPage() {
+  return document.getElementById("home-page") !== null;
+}
+
+function hasBoardAuthUi() {
+  return document.getElementById("board-auth") !== null;
+}
+
 function getPostDetailIdFromUrl() {
   const postId = new URLSearchParams(window.location.search).get("id");
   return postId ? postId.trim() : "";
@@ -907,6 +915,7 @@ function updateBoardAuthUi() {
   if (!isLoggedIn) {
     closeBoardWriteForm(true);
     setBoardWriteHint("", false);
+    closeBoardNicknamePanel();
   }
 
   if (isLoggedIn && nicknameEl) {
@@ -926,6 +935,69 @@ function setBoardNicknameStatus(message, visible) {
 
   statusEl.textContent = message || "";
   statusEl.classList.toggle("is-hidden", !visible);
+}
+
+function isBoardNicknamePanelOpen() {
+  const panelEl = document.getElementById("board-nickname-panel");
+  return Boolean(panelEl && !panelEl.classList.contains("is-hidden"));
+}
+
+function openBoardNicknamePanel() {
+  const panelEl = document.getElementById("board-nickname-panel");
+  const toggleBtn = document.getElementById("board-nickname-toggle");
+  const nicknameInputEl = document.getElementById("board-nickname-input");
+
+  if (panelEl) {
+    panelEl.classList.remove("is-hidden");
+  }
+
+  if (toggleBtn) {
+    toggleBtn.setAttribute("aria-expanded", "true");
+  }
+
+  if (nicknameInputEl) {
+    nicknameInputEl.value = getBoardNickname();
+  }
+}
+
+function closeBoardNicknamePanel() {
+  const panelEl = document.getElementById("board-nickname-panel");
+  const toggleBtn = document.getElementById("board-nickname-toggle");
+  const nicknameFormEl = document.getElementById("board-nickname-form");
+
+  if (panelEl) {
+    panelEl.classList.add("is-hidden");
+  }
+
+  if (toggleBtn) {
+    toggleBtn.setAttribute("aria-expanded", "false");
+  }
+
+  if (nicknameFormEl) {
+    nicknameFormEl.reset();
+  }
+
+  setBoardNicknameStatus("", false);
+}
+
+function bindBoardNicknameToggle() {
+  const toggleBtn = document.getElementById("board-nickname-toggle");
+  if (!toggleBtn) {
+    return;
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    if (!boardAuthUser) {
+      return;
+    }
+
+    if (isBoardNicknamePanelOpen()) {
+      closeBoardNicknamePanel();
+      return;
+    }
+
+    openBoardNicknamePanel();
+  });
 }
 
 const BOARD_DEFAULT_NICKNAME = "전남팬";
@@ -2153,7 +2225,10 @@ function setupBoardAuthListeners(db, auth, listStatusEl, onAuthReady) {
         boardUserProfile = await fetchUserProfile(db, currentUid);
         updateBoardAuthUi();
         setBoardNicknameStatus(BOARD_NICKNAME_SAVE_SUCCESS_MESSAGE, true);
-        setTimeout(() => setBoardNicknameStatus("", false), 2000);
+        setTimeout(() => {
+          closeBoardNicknamePanel();
+          setBoardNicknameStatus("", false);
+        }, 2000);
         await onAuthReady(getBoardContext());
       } catch (error) {
         console.error("[board] 닉네임 저장 실패:", error);
@@ -2162,7 +2237,28 @@ function setupBoardAuthListeners(db, auth, listStatusEl, onAuthReady) {
     });
   }
 
+  bindBoardNicknameToggle();
+
   return getBoardContext;
+}
+
+function initIndexAuthPage() {
+  if (!hasBoardAuthUi()) {
+    return;
+  }
+
+  if (typeof firebase === "undefined") {
+    return;
+  }
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+  }
+
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  setupBoardAuthListeners(db, auth, null, async () => {});
 }
 
 async function renderPostDetailPage(
@@ -2399,6 +2495,10 @@ function initBoardPage() {
       submitBtn.disabled = false;
     }
   });
+}
+
+if (isIndexPage()) {
+  initIndexAuthPage();
 }
 
 if (isBoardPage()) {
