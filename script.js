@@ -951,7 +951,8 @@ async function loadBoardPosts(db, currentUid, isAdminUser) {
       )
       .join("");
     setBoardStatus(statusEl, "hidden", "");
-  } catch {
+  } catch (error) {
+    console.error("[board] 게시글 불러오기 실패:", error);
     setBoardStatus(statusEl, "error", BOARD_LOAD_ERROR_MESSAGE);
     listEl.innerHTML = "";
   }
@@ -1024,7 +1025,8 @@ function bindBoardPostActions(db, getBoardContext) {
         await deleteBoardPost(db, postId);
         setBoardPostStatus(cardEl, BOARD_DELETE_SUCCESS_MESSAGE, true);
         await loadBoardPosts(db, currentUid, isAdminUser);
-      } catch {
+      } catch (error) {
+        console.error("[board] 글 삭제 실패:", error);
         setBoardPostStatus(cardEl, BOARD_DELETE_ERROR_MESSAGE, true);
         actionBtn.disabled = false;
       }
@@ -1059,7 +1061,8 @@ function bindBoardPostActions(db, getBoardContext) {
       await updateBoardPost(db, postId, values);
       setBoardPostStatus(cardEl, BOARD_UPDATE_SUCCESS_MESSAGE, true);
       await loadBoardPosts(db, currentUid, isAdminUser);
-    } catch {
+    } catch (error) {
+      console.error("[board] 글 수정 실패:", error);
       setBoardPostStatus(cardEl, BOARD_UPDATE_ERROR_MESSAGE, true);
       if (saveBtn) {
         saveBtn.disabled = false;
@@ -1138,7 +1141,8 @@ function initBoardPage() {
         formEl.reset();
         updateBoardAdminUi(currentUid);
         await loadBoardPosts(db, currentUid, isAdminUser);
-      } catch {
+      } catch (error) {
+        console.error("[board] 글 작성 실패:", error);
         setBoardStatus(formStatusEl, "error", BOARD_SAVE_ERROR_MESSAGE);
       } finally {
         submitBtn.disabled = false;
