@@ -1301,7 +1301,7 @@ function createBoardListItem(postId, post) {
 
   return `
     <a
-      href="post-detail.html?id=${encodeURIComponent(postId)}"
+      href="./post-detail.html?id=${encodeURIComponent(postId)}"
       class="board-list-item${noticeClass}"
     >
       ${noticeBadge}
@@ -2455,7 +2455,6 @@ function initBoardPage() {
   const formEl = document.getElementById("board-form");
   const formStatusEl = document.getElementById("board-form-status");
   const listStatusEl = document.getElementById("board-list-status");
-  const submitBtn = formEl.querySelector(".board-submit-btn");
 
   const getBoardContext = setupBoardAuthListeners(
     db,
@@ -2505,46 +2504,57 @@ function initBoardPage() {
     });
   }
 
-  formEl.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  if (formEl) {
+    const submitBtn = formEl.querySelector(".board-submit-btn");
 
-    const { currentUid, isAdminUser, isLoggedIn, nickname } = getBoardContext();
+    formEl.addEventListener("submit", async (event) => {
+      event.preventDefault();
 
-    if (!currentUid) {
-      setBoardStatus(formStatusEl, "error", BOARD_LOGIN_REQUIRED_MESSAGE);
-      return;
-    }
+      const { currentUid, isAdminUser, isLoggedIn, nickname } = getBoardContext();
 
-    const values = getBoardFormValues(formEl, isAdminUser);
+      if (!currentUid) {
+        setBoardStatus(formStatusEl, "error", BOARD_LOGIN_REQUIRED_MESSAGE);
+        return;
+      }
 
-    if (!isBoardFormValid(values)) {
-      setBoardStatus(formStatusEl, "error", BOARD_VALIDATION_MESSAGE);
-      return;
-    }
+      const values = getBoardFormValues(formEl, isAdminUser);
 
-    if (!nickname) {
-      setBoardStatus(formStatusEl, "error", BOARD_NICKNAME_VALIDATION_MESSAGE);
-      return;
-    }
+      if (!isBoardFormValid(values)) {
+        setBoardStatus(formStatusEl, "error", BOARD_VALIDATION_MESSAGE);
+        return;
+      }
 
-    submitBtn.disabled = true;
-    setBoardStatus(formStatusEl, "saving", BOARD_SAVING_MESSAGE);
+      if (!nickname) {
+        setBoardStatus(formStatusEl, "error", BOARD_NICKNAME_VALIDATION_MESSAGE);
+        return;
+      }
 
-    try {
-      await saveBoardPost(db, values, currentUid, nickname);
-      setBoardStatus(formStatusEl, "success", BOARD_SAVE_SUCCESS_MESSAGE);
-      closeBoardWriteForm(true);
-      updateBoardAdminUi(currentUid);
-      await loadBoardPosts(db, currentUid, isAdminUser, isLoggedIn, 1);
-    } catch (error) {
-      console.error("[board] 글 작성 실패:", error);
-      console.error("[board] 글 작성 실패 code:", error.code);
-      console.error("[board] 글 작성 실패 message:", error.message);
-      setBoardStatus(formStatusEl, "error", BOARD_SAVE_ERROR_MESSAGE);
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
+      if (submitBtn) {
+        submitBtn.disabled = true;
+      }
+      setBoardStatus(formStatusEl, "saving", BOARD_SAVING_MESSAGE);
+
+      try {
+        await saveBoardPost(db, values, currentUid, nickname);
+        setBoardStatus(formStatusEl, "success", BOARD_SAVE_SUCCESS_MESSAGE);
+        closeBoardWriteForm(true);
+        updateBoardAdminUi(currentUid);
+        await loadBoardPosts(db, currentUid, isAdminUser, isLoggedIn, 1);
+      } catch (error) {
+        console.error(
+          "[board] 글 작성 실패:",
+          error?.code,
+          error?.message,
+          error
+        );
+        setBoardStatus(formStatusEl, "error", BOARD_SAVE_ERROR_MESSAGE);
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+        }
+      }
+    });
+  }
 }
 
 if (isIndexPage()) {
