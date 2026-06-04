@@ -696,6 +696,7 @@ const BOARD_COMMENT_EMPTY_MESSAGE = "첫 댓글을 남겨보세요.";
 const BOARD_COMMENT_VALIDATION_MESSAGE = "댓글 내용을 입력해주세요.";
 const BOARD_LOGIN_REQUIRED_MESSAGE =
   "Google 로그인 후 이용할 수 있습니다.";
+const BOARD_WRITE_LOGIN_MESSAGE = "로그인 후 글을 작성할 수 있습니다.";
 const BOARD_NICKNAME_SAVE_SUCCESS_MESSAGE = "닉네임이 저장되었습니다.";
 const BOARD_NICKNAME_SAVE_ERROR_MESSAGE =
   "닉네임 저장에 실패했습니다. 잠시 후 다시 시도해주세요.";
@@ -830,10 +831,67 @@ function getBoardNickname() {
   return typeof nickname === "string" ? nickname.trim() : "";
 }
 
+function isBoardWriteFormOpen() {
+  const writeSectionEl = document.getElementById("board-write-section");
+  return Boolean(writeSectionEl && !writeSectionEl.classList.contains("is-hidden"));
+}
+
+function setBoardWriteHint(message, visible) {
+  const hintEl = document.getElementById("board-write-hint");
+  if (!hintEl) {
+    return;
+  }
+
+  hintEl.textContent = message || "";
+  hintEl.classList.toggle("is-hidden", !visible);
+}
+
+function openBoardWriteForm() {
+  const writeSectionEl = document.getElementById("board-write-section");
+  const toggleBtn = document.getElementById("board-write-toggle");
+
+  setBoardWriteHint("", false);
+
+  if (writeSectionEl) {
+    writeSectionEl.classList.remove("is-hidden");
+  }
+
+  if (toggleBtn) {
+    toggleBtn.setAttribute("aria-expanded", "true");
+  }
+}
+
+function closeBoardWriteForm(resetForm = true) {
+  const writeSectionEl = document.getElementById("board-write-section");
+  const formEl = document.getElementById("board-form");
+  const formStatusEl = document.getElementById("board-form-status");
+  const toggleBtn = document.getElementById("board-write-toggle");
+  const noticeCheckboxEl = document.getElementById("board-is-notice");
+
+  if (writeSectionEl) {
+    writeSectionEl.classList.add("is-hidden");
+  }
+
+  if (resetForm && formEl) {
+    formEl.reset();
+  }
+
+  if (noticeCheckboxEl) {
+    noticeCheckboxEl.checked = false;
+  }
+
+  if (formStatusEl) {
+    setBoardStatus(formStatusEl, "hidden", "");
+  }
+
+  if (toggleBtn) {
+    toggleBtn.setAttribute("aria-expanded", "false");
+  }
+}
+
 function updateBoardAuthUi() {
   const guestEl = document.getElementById("board-auth-guest");
   const userEl = document.getElementById("board-auth-user");
-  const writeSectionEl = document.getElementById("board-write-section");
   const nicknameEl = document.getElementById("board-current-nickname");
   const nicknameInputEl = document.getElementById("board-nickname-input");
   const isLoggedIn = Boolean(boardAuthUser);
@@ -846,8 +904,9 @@ function updateBoardAuthUi() {
     userEl.classList.toggle("is-hidden", !isLoggedIn);
   }
 
-  if (writeSectionEl) {
-    writeSectionEl.classList.toggle("is-hidden", !isLoggedIn);
+  if (!isLoggedIn) {
+    closeBoardWriteForm(true);
+    setBoardWriteHint("", false);
   }
 
   if (isLoggedIn && nicknameEl) {
@@ -2258,6 +2317,9 @@ function initBoardPage() {
     listStatusEl,
     async ({ currentUid, isAdminUser, isLoggedIn }) => {
       updateBoardAdminUi(currentUid);
+      if (!isLoggedIn) {
+        closeBoardWriteForm(true);
+      }
       await renderBoardPostsPage(db, currentUid, isAdminUser, isLoggedIn);
     }
   );
@@ -2265,6 +2327,37 @@ function initBoardPage() {
   bindBoardPagination(getBoardContext);
 
   loadBoardPosts(db, null, false, false, 1);
+
+  const writeToggleBtn = document.getElementById("board-write-toggle");
+  const writeCancelBtn = document.getElementById("board-write-cancel");
+
+  if (writeToggleBtn) {
+    writeToggleBtn.addEventListener("click", () => {
+      const { isLoggedIn } = getBoardContext();
+
+      if (!isLoggedIn) {
+        closeBoardWriteForm(true);
+        setBoardWriteHint(BOARD_WRITE_LOGIN_MESSAGE, true);
+        return;
+      }
+
+      setBoardWriteHint("", false);
+
+      if (isBoardWriteFormOpen()) {
+        closeBoardWriteForm(true);
+        return;
+      }
+
+      openBoardWriteForm();
+    });
+  }
+
+  if (writeCancelBtn) {
+    writeCancelBtn.addEventListener("click", () => {
+      closeBoardWriteForm(true);
+      setBoardWriteHint("", false);
+    });
+  }
 
   formEl.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -2294,7 +2387,7 @@ function initBoardPage() {
     try {
       await saveBoardPost(db, values, currentUid, nickname);
       setBoardStatus(formStatusEl, "success", BOARD_SAVE_SUCCESS_MESSAGE);
-      formEl.reset();
+      closeBoardWriteForm(true);
       updateBoardAdminUi(currentUid);
       await loadBoardPosts(db, currentUid, isAdminUser, isLoggedIn, 1);
     } catch (error) {

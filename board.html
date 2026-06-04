@@ -56,56 +56,79 @@
           </div>
         </div>
 
-        <div id="board-write-section" class="board-write-section is-hidden">
-        <form id="board-form" class="board-form" novalidate>
-          <div class="board-field">
-            <label class="board-label" for="board-title">제목</label>
-            <input
-              id="board-title"
-              class="board-input"
-              type="text"
-              name="title"
-              maxlength="80"
-              autocomplete="off"
-              placeholder="제목을 입력하세요"
-            />
-          </div>
-
-          <div class="board-field">
-            <label class="board-label" for="board-content">내용</label>
-            <textarea
-              id="board-content"
-              class="board-textarea"
-              name="content"
-              rows="5"
-              maxlength="2000"
-              placeholder="내용을 입력하세요"
-            ></textarea>
-          </div>
-
-          <div id="board-notice-field" class="board-field board-notice-field is-hidden">
-            <label class="board-notice-label" for="board-is-notice">
-              <input
-                id="board-is-notice"
-                type="checkbox"
-                name="isNotice"
-              />
-              공지글로 등록
-            </label>
-          </div>
-
-          <p
-            id="board-form-status"
-            class="board-status is-hidden"
-            role="status"
-            aria-live="polite"
-          ></p>
-
-          <button type="submit" class="btn board-submit-btn">등록</button>
-        </form>
+        <div class="board-list-header">
+          <h2 class="section-subtitle board-list-heading">게시글 목록</h2>
+          <button
+            type="button"
+            id="board-write-toggle"
+            class="board-write-toggle-btn"
+            aria-expanded="false"
+          >
+            글쓰기
+          </button>
         </div>
 
-        <h2 class="section-subtitle">게시글 목록</h2>
+        <p
+          id="board-write-hint"
+          class="board-write-hint is-hidden"
+          role="status"
+          aria-live="polite"
+        ></p>
+
+        <div id="board-write-section" class="board-write-section is-hidden">
+          <form id="board-form" class="board-form" novalidate>
+            <div class="board-field">
+              <label class="board-label" for="board-title">제목</label>
+              <input
+                id="board-title"
+                class="board-input"
+                type="text"
+                name="title"
+                maxlength="80"
+                autocomplete="off"
+                placeholder="제목을 입력하세요"
+              />
+            </div>
+
+            <div class="board-field">
+              <label class="board-label" for="board-content">내용</label>
+              <textarea
+                id="board-content"
+                class="board-textarea"
+                name="content"
+                rows="5"
+                maxlength="2000"
+                placeholder="내용을 입력하세요"
+              ></textarea>
+            </div>
+
+            <div id="board-notice-field" class="board-field board-notice-field is-hidden">
+              <label class="board-notice-label" for="board-is-notice">
+                <input
+                  id="board-is-notice"
+                  type="checkbox"
+                  name="isNotice"
+                />
+                공지글로 등록
+              </label>
+            </div>
+
+            <p
+              id="board-form-status"
+              class="board-status is-hidden"
+              role="status"
+              aria-live="polite"
+            ></p>
+
+            <div class="board-form-actions">
+              <button type="submit" class="btn board-submit-btn">등록</button>
+              <button type="button" id="board-write-cancel" class="btn board-write-cancel-btn">
+                취소
+              </button>
+            </div>
+          </form>
+        </div>
+
         <p
           id="board-list-status"
           class="board-status is-loading"
