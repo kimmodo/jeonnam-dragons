@@ -699,7 +699,8 @@ const BOARD_COMMENT_SAVE_ERROR_MESSAGE =
 const BOARD_COMMENT_DELETE_ERROR_MESSAGE =
   "댓글 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.";
 
-let boardPostsCache = [];
+let boardNoticePostsCache = [];
+let boardRegularPostsCache = [];
 let boardCurrentPage = 1;
 const BOARD_LOADING_MESSAGE = "게시글을 불러오는 중...";
 const BOARD_LOAD_ERROR_MESSAGE =
@@ -781,12 +782,12 @@ function formatBoardDate(value) {
 
 function createBoardPostCard(postId, post, currentUid, isAdminUser) {
   const isOwner = Boolean(post.uid && post.uid === currentUid);
-  const isNotice = post.isNotice === true;
+  const isNotice = isBoardNoticePost(post);
   const canEdit = isOwner;
   const canDelete = isOwner || isAdminUser;
   const noticeClass = isNotice ? " board-post-card--notice" : "";
   const noticeBadge = isNotice
-    ? '<span class="board-notice-badge">공지</span>'
+    ? '<span class="board-notice-badge">📌 공지</span>'
     : "";
 
   let actionButtons = "";
@@ -1084,20 +1085,46 @@ async function deleteBoardComment(db, postId, commentId) {
     .delete();
 }
 
-function sortBoardPostsForDisplay(docs) {
+function isBoardNoticePost(post) {
+  return post.isNotice === true;
+}
+
+function getBoardPostTime(post) {
+  const value = post.createdAt;
+  if (!value) {
+    return 0;
+  }
+
+  if (typeof value.toDate === "function") {
+    return value.toDate().getTime();
+  }
+
+  return new Date(value).getTime() || 0;
+}
+
+function sortBoardPostsByNewest(posts) {
+  return [...posts].sort(
+    (a, b) => getBoardPostTime(b.data) - getBoardPostTime(a.data)
+  );
+}
+
+function splitBoardPosts(docs) {
   const noticePosts = [];
   const regularPosts = [];
 
   docs.forEach((doc) => {
     const item = { id: doc.id, data: doc.data() };
-    if (doc.data().isNotice === true) {
+    if (isBoardNoticePost(doc.data())) {
       noticePosts.push(item);
     } else {
       regularPosts.push(item);
     }
   });
 
-  return [...noticePosts, ...regularPosts];
+  return {
+    noticePosts: sortBoardPostsByNewest(noticePosts),
+    regularPosts: sortBoardPostsByNewest(regularPosts),
+  };
 }
 
 async function fetchBoardPosts(db) {
@@ -1106,15 +1133,15 @@ async function fetchBoardPosts(db) {
     .orderBy("createdAt", "desc")
     .get();
 
-  return sortBoardPostsForDisplay(snapshot.docs);
+  return splitBoardPosts(snapshot.docs);
 }
 
 function getBoardTotalPages() {
-  if (boardPostsCache.length === 0) {
+  if (boardRegularPostsCache.length === 0) {
     return 0;
   }
 
-  return Math.ceil(boardPostsCache.length / BOARD_PAGE_SIZE);
+  return Math.ceil(boardRegularPostsCache.length / BOARD_PAGE_SIZE);
 }
 
 function clampBoardPage(page) {
@@ -1165,7 +1192,10 @@ function renderBoardPostsPage(currentUid, isAdminUser) {
     return;
   }
 
-  if (boardPostsCache.length === 0) {
+  const hasNotices = boardNoticePostsCache.length > 0;
+  const hasRegular = boardRegularPostsCache.length > 0;
+
+  if (!hasNotices && !hasRegular) {
     listEl.innerHTML = "";
     if (paginationEl) {
       paginationEl.innerHTML = "";
@@ -1177,16 +1207,27 @@ function renderBoardPostsPage(currentUid, isAdminUser) {
 
   boardCurrentPage = clampBoardPage(boardCurrentPage);
   const startIndex = (boardCurrentPage - 1) * BOARD_PAGE_SIZE;
-  const pagePosts = boardPostsCache.slice(
+  const pageRegularPosts = boardRegularPostsCache.slice(
     startIndex,
     startIndex + BOARD_PAGE_SIZE
   );
 
-  listEl.innerHTML = pagePosts
-    .map((post) =>
-      createBoardPostCard(post.id, post.data, currentUid, isAdminUser)
-    )
-    .join("");
+  const noticeHtml = hasNotices
+    ? `<div class="board-notices-group" aria-label="공지글">${boardNoticePostsCache
+        .map((post) =>
+          createBoardPostCard(post.id, post.data, currentUid, isAdminUser)
+        )
+        .join("")}</div>`
+    : "";
+  const regularHtml = pageRegularPosts.length
+    ? `<div class="board-regular-group">${pageRegularPosts
+        .map((post) =>
+          createBoardPostCard(post.id, post.data, currentUid, isAdminUser)
+        )
+        .join("")}</div>`
+    : "";
+
+  listEl.innerHTML = noticeHtml + regularHtml;
   renderBoardPagination();
   setBoardStatus(statusEl, "hidden", "");
 }
@@ -1208,12 +1249,15 @@ async function loadBoardPosts(db, currentUid, isAdminUser, page = 1) {
   }
 
   try {
-    boardPostsCache = await fetchBoardPosts(db);
+    const { noticePosts, regularPosts } = await fetchBoardPosts(db);
+    boardNoticePostsCache = noticePosts;
+    boardRegularPostsCache = regularPosts;
     boardCurrentPage = page;
     renderBoardPostsPage(currentUid, isAdminUser);
   } catch (error) {
     console.error("[board] 게시글 불러오기 실패:", error);
-    boardPostsCache = [];
+    boardNoticePostsCache = [];
+    boardRegularPostsCache = [];
     setBoardStatus(statusEl, "error", BOARD_LOAD_ERROR_MESSAGE);
     listEl.innerHTML = "";
     if (paginationEl) {
@@ -1257,7 +1301,7 @@ async function saveBoardPost(db, values, uid) {
     author: values.author,
     content: values.content,
     uid,
-    isNotice: values.isNotice === true,
+    isNotice: Boolean(values.isNotice),
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
 }
