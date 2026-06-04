@@ -1342,13 +1342,7 @@ function enforcePopupOnlyGoogleAuth(auth) {
     return auth;
   }
 
-  if (typeof auth.signInWithRedirect === "function") {
-    auth.signInWithRedirect = () =>
-      Promise.reject({
-        code: "auth/redirect-disabled",
-        message: "Redirect 로그인은 사용하지 않습니다. 팝업 로그인만 지원합니다.",
-      });
-  }
+
 
   if (typeof auth.getRedirectResult === "function") {
     auth.getRedirectResult = () => Promise.resolve(null);
