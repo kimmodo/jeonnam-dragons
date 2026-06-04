@@ -418,6 +418,8 @@ h2,
 }
 
 #home-page .menu-card {
+  position: relative;
+  z-index: 2;
   margin-top: 0;
 }
 
@@ -455,7 +457,16 @@ h2,
   align-items: center;
 }
 
+.bottom-character-wrap,
+.bottom-character-wrap *,
+.bottom-character {
+  pointer-events: none;
+  user-select: none;
+}
+
 .bottom-character-wrap {
+  position: relative;
+  z-index: 0;
   display: flex;
   justify-content: center;
   margin-top: -70px;
@@ -468,7 +479,6 @@ h2,
   max-height: 330px;
   height: auto;
   object-fit: contain;
-  pointer-events: none;
 }
 
 /* gallery.html 사진첩 */
