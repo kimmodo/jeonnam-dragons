@@ -413,26 +413,62 @@ h2,
 .hero-card--with-character {
   position: relative;
   overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(72px, 92px) 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-sm);
+  row-gap: var(--space-sm);
   padding: var(--space-lg) var(--space-md);
   text-align: center;
 }
 
 .hero-character {
-  position: absolute;
-  left: 22px;
-  bottom: 10px;
-  width: 90px;
+  grid-column: 1;
+  grid-row: 1;
+  align-self: end;
+  justify-self: start;
+  width: 100%;
+  max-width: 88px;
+  max-height: 108px;
   height: auto;
   object-fit: contain;
+  object-position: left bottom;
   pointer-events: none;
   z-index: 1;
 }
 
 .hero-text {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
   position: relative;
-  z-index: 3;
+  z-index: 2;
   width: 100%;
+  min-width: 0;
   text-align: center;
+}
+
+#home-page .board-auth-bar--home {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  z-index: 3;
+  margin: 0;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+  justify-content: center;
+  text-align: center;
+}
+
+#home-page .board-auth-bar__guest,
+#home-page .board-auth-bar__row,
+#home-page .board-nickname-form--inline {
+  justify-content: center;
+}
+
+#home-page .board-auth-bar__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-text h1,
@@ -594,9 +630,7 @@ body.gallery-modal-open {
 }
 
 .board-auth-bar--home {
-  margin-top: var(--space-md);
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--color-border);
+  margin-top: var(--space-sm);
 }
 
 .board-auth-bar__guest.is-hidden,
@@ -1253,14 +1287,13 @@ body.gallery-modal-open {
   }
 
   .hero-card--with-character {
-    padding: 14px 12px 54px;
+    padding: 14px 12px;
+    grid-template-columns: minmax(56px, 72px) 1fr;
   }
 
   .hero-character {
-    width: 72px;
-    left: 8px;
-    bottom: 6px;
-    max-height: 96px;
+    max-width: 68px;
+    max-height: 88px;
   }
 
   .hero-text h1 {
@@ -1381,15 +1414,25 @@ body.gallery-modal-open {
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 420px) {
+  .hero-card--with-character {
+    grid-template-columns: 1fr;
+  }
+
   .hero-character {
     display: none;
   }
 
-  .hero-card--with-character {
-    padding-bottom: var(--space-lg);
+  .hero-text {
+    grid-column: 1;
   }
 
+  #home-page .board-auth-bar--home {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 360px) {
   .gallery-grid {
     grid-template-columns: 1fr;
   }
