@@ -963,6 +963,8 @@ const BOARD_COMMENT_EMPTY_MESSAGE = "첫 댓글을 남겨보세요.";
 const BOARD_COMMENT_VALIDATION_MESSAGE = "댓글 내용을 입력해주세요.";
 const BOARD_LOGIN_REQUIRED_MESSAGE =
   "Google 로그인 후 이용할 수 있습니다.";
+const BOARD_GOOGLE_AUTH_REQUIRED_MESSAGE =
+  "Google 로그인 계정만 이용할 수 있습니다. Google로 다시 로그인해주세요.";
 const BOARD_WRITE_LOGIN_MESSAGE = "로그인 후 글을 작성할 수 있습니다.";
 const BOARD_NICKNAME_SAVE_SUCCESS_MESSAGE = "닉네임이 저장되었습니다.";
 const BOARD_NICKNAME_SAVE_ERROR_MESSAGE =
@@ -1169,12 +1171,25 @@ function getBoardWelcomeText() {
   return nickname ? `${nickname}님 환영합니다` : "환영합니다";
 }
 
+function isGoogleAuthUser(user) {
+  if (!user || user.isAnonymous) {
+    return false;
+  }
+
+  const providers = Array.isArray(user.providerData) ? user.providerData : [];
+  if (providers.some((provider) => provider?.providerId === "google.com")) {
+    return true;
+  }
+
+  return Boolean(user.email);
+}
+
 function updateBoardAuthUi() {
   const guestEl = document.getElementById("board-auth-guest");
   const userEl = document.getElementById("board-auth-user");
   const welcomeEl = document.getElementById("board-auth-welcome");
   const nicknameInputEl = document.getElementById("board-nickname-input");
-  const isLoggedIn = Boolean(boardAuthUser);
+  const isLoggedIn = isGoogleAuthUser(boardAuthUser);
 
   if (guestEl) {
     guestEl.classList.toggle("is-hidden", isLoggedIn);
@@ -1258,7 +1273,7 @@ function bindBoardNicknameToggle() {
 
   if (toggleBtn) {
     toggleBtn.addEventListener("click", () => {
-      if (!boardAuthUser) {
+      if (!isGoogleAuthUser(boardAuthUser)) {
         return;
       }
 
@@ -1281,7 +1296,9 @@ function bindBoardNicknameToggle() {
 const BOARD_DEFAULT_NICKNAME = "전남팬";
 
 function getDefaultNicknameFromGoogle(user) {
-  return (user.displayName || "").trim() || BOARD_DEFAULT_NICKNAME;
+  const displayName =
+    typeof user.displayName === "string" ? user.displayName.trim() : "";
+  return displayName || BOARD_DEFAULT_NICKNAME;
 }
 
 function getGoogleProfileMeta(user) {
@@ -1302,6 +1319,10 @@ async function fetchUserProfile(db, uid) {
 }
 
 async function ensureUserProfile(db, user) {
+  if (!isGoogleAuthUser(user)) {
+    return null;
+  }
+
   const userRef = db.collection(BOARD_USERS_COLLECTION).doc(user.uid);
   const snapshot = await userRef.get();
 
@@ -1320,6 +1341,10 @@ async function ensureUserProfile(db, user) {
 }
 
 async function updateUserNickname(db, user, nickname) {
+  if (!isGoogleAuthUser(user)) {
+    throw new Error(BOARD_GOOGLE_AUTH_REQUIRED_MESSAGE);
+  }
+
   const userRef = db.collection(BOARD_USERS_COLLECTION).doc(user.uid);
   const snapshot = await userRef.get();
   const profileData = {
@@ -1346,6 +1371,15 @@ function enforcePopupOnlyGoogleAuth(auth) {
 
   if (typeof auth.getRedirectResult === "function") {
     auth.getRedirectResult = () => Promise.resolve(null);
+  }
+
+  if (typeof auth.signInAnonymously === "function") {
+    auth.signInAnonymously = () =>
+      Promise.reject(
+        Object.assign(new Error("Anonymous sign-in is disabled."), {
+          code: "auth/operation-not-allowed",
+        })
+      );
   }
 
   auth.__boardPopupOnlyAuth = true;
@@ -2492,14 +2526,42 @@ function setupBoardAuthListeners(db, auth, listStatusEl, onAuthReady) {
   let currentUid = null;
   let isAdminUser = false;
 
-  const getBoardContext = () => ({
-    currentUid,
-    isAdminUser,
-    isLoggedIn: Boolean(currentUid),
-    nickname: getBoardNickname(),
-  });
+  const getBoardContext = () => {
+    const isLoggedIn = isGoogleAuthUser(boardAuthUser);
+
+    return {
+      currentUid: isLoggedIn ? currentUid : null,
+      isAdminUser: isLoggedIn ? isAdminUser : false,
+      isLoggedIn,
+      nickname: isLoggedIn ? getBoardNickname() : "",
+    };
+  };
 
   async function handleAuthStateChange(user) {
+    if (user && !isGoogleAuthUser(user)) {
+      boardAuthUser = null;
+      currentUid = null;
+      isAdminUser = false;
+      boardUserProfile = null;
+      updateBoardAuthUi();
+      setBoardLoginError(
+        {
+          code: "auth/google-required",
+          message: BOARD_GOOGLE_AUTH_REQUIRED_MESSAGE,
+        },
+        true
+      );
+
+      try {
+        await signOutFromBoard(auth);
+      } catch (error) {
+        console.error("[board] 익명 세션 로그아웃 실패:", error);
+      }
+
+      await onAuthReady(getBoardContext());
+      return;
+    }
+
     boardAuthUser = user;
 
     if (user) {
@@ -2563,7 +2625,7 @@ function setupBoardAuthListeners(db, auth, listStatusEl, onAuthReady) {
     nicknameFormEl.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      if (!currentUid || !boardAuthUser) {
+      if (!isGoogleAuthUser(boardAuthUser) || !currentUid) {
         setBoardNicknameStatus(BOARD_LOGIN_REQUIRED_MESSAGE, true);
         return;
       }
@@ -2818,7 +2880,7 @@ function initBoardPage() {
 
       const { currentUid, isAdminUser, isLoggedIn, nickname } = getBoardContext();
 
-      if (!currentUid) {
+      if (!isLoggedIn || !currentUid) {
         setBoardStatus(formStatusEl, "error", BOARD_LOGIN_REQUIRED_MESSAGE);
         return;
       }
