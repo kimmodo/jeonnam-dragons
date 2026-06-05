@@ -1251,6 +1251,22 @@ body.gallery-modal-open {
 
 .board-list-item--notice {
   background: var(--color-panel-highlight);
+  border-color: rgba(17, 17, 17, 0.14);
+  box-shadow: 0 1px 3px rgba(17, 17, 17, 0.05);
+}
+
+.board-list-item__head,
+.board-post-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.board-list-item--notice .board-list-title,
+.board-post-card--notice .board-post-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 800;
 }
 
 .board-list-title {
@@ -1328,6 +1344,8 @@ body.gallery-modal-open {
   display: grid;
   gap: var(--space-sm);
   margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .board-regular-group {
@@ -1337,18 +1355,23 @@ body.gallery-modal-open {
 
 .board-post-card--notice {
   background: var(--color-panel-highlight);
+  border-color: rgba(17, 17, 17, 0.14);
+  box-shadow: 0 1px 3px rgba(17, 17, 17, 0.05);
 }
 
 .board-notice-badge {
-  display: inline-block;
-  margin-bottom: 6px;
-  padding: 4px 10px;
-  font-size: 0.78rem;
-  font-weight: bold;
-  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 2px;
+  padding: 3px 7px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
   background: var(--color-text);
   color: var(--color-surface);
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .board-post-title {

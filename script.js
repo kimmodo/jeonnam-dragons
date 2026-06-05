@@ -1619,9 +1619,9 @@ async function syncPostLikeState(db, postId, uid) {
 function createBoardListItem(postId, post) {
   const isNotice = isBoardNoticePost(post);
   const noticeClass = isNotice ? " board-list-item--notice" : "";
-  const noticeBadge = isNotice
-    ? '<span class="board-notice-badge">📌 공지</span>'
-    : "";
+  const titleHtml = isNotice
+    ? `<div class="board-list-item__head"><span class="board-notice-badge">공지</span><h3 class="board-list-title">${escapeHtml(post.title || "")}</h3></div>`
+    : `<h3 class="board-list-title">${escapeHtml(post.title || "")}</h3>`;
   const likeCount = getPostLikeCount(post);
   const commentCount = getPostCommentCount(post);
   const viewCount = getPostViewCount(post);
@@ -1631,8 +1631,7 @@ function createBoardListItem(postId, post) {
       href="./post-detail.html?id=${encodeURIComponent(postId)}"
       class="board-list-item${noticeClass}"
     >
-      ${noticeBadge}
-      <h3 class="board-list-title">${escapeHtml(post.title || "")}</h3>
+      ${titleHtml}
       <p class="board-list-meta">
         ${escapeHtml(getBoardDisplayAuthor(post))} · ${formatBoardDate(post.createdAt)}
       </p>
@@ -1655,9 +1654,9 @@ function createBoardPostCard(
   const canEdit = isOwner;
   const canDelete = isOwner || isAdminUser;
   const noticeClass = isNotice ? " board-post-card--notice" : "";
-  const noticeBadge = isNotice
-    ? '<span class="board-notice-badge">📌 공지</span>'
-    : "";
+  const titleHtml = isNotice
+    ? `<div class="board-post-head"><span class="board-notice-badge">공지</span><h3 class="board-post-title">${escapeHtml(post.title || "")}</h3></div>`
+    : `<h3 class="board-post-title">${escapeHtml(post.title || "")}</h3>`;
 
   let actionButtons = "";
   if (canEdit && canDelete) {
@@ -1730,8 +1729,7 @@ function createBoardPostCard(
   return `
     <article class="board-post-card${noticeClass}" data-post-id="${postId}">
       <div class="board-post-view">
-        ${noticeBadge}
-        <h3 class="board-post-title">${escapeHtml(post.title || "")}</h3>
+        ${titleHtml}
         <p class="board-post-meta">
           ${escapeHtml(getBoardDisplayAuthor(post))} · ${formatBoardDate(post.createdAt)}
         </p>
