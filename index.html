@@ -38,85 +38,104 @@
       })(window, document, "clarity", "script", "x25iwp6bu5");
     </script>
   </head>
-  <body>
+  <body class="home-body">
     <main class="page" id="home-page">
-      <header class="site-header site-header--home">
-        <a class="site-brand" href="./index.html">YELLOW DRAGONS</a>
+      <header class="site-header site-header--home home-hero">
+        <div class="home-hero__glow" aria-hidden="true"></div>
+        <div class="home-hero__stripes" aria-hidden="true"></div>
+        <a class="site-brand home-hero__brand" href="./index.html">YELLOW DRAGONS</a>
       </header>
 
       <div class="home-main">
-        <div class="home-games-row">
-          <div id="home-next-game" class="home-game-slot" aria-live="polite"></div>
-          <div id="home-recent-past-game" class="home-game-slot" aria-live="polite"></div>
-        </div>
+        <section class="home-match-panel" aria-label="경기 정보">
+          <div class="home-games-row">
+            <div id="home-next-game" class="home-game-slot home-game-slot--next" aria-live="polite"></div>
+            <div id="home-recent-past-game" class="home-game-slot home-game-slot--last" aria-live="polite"></div>
+          </div>
+        </section>
 
-        <nav class="home-menu-grid" aria-label="바로가기">
-          <a class="nav-btn" href="./schedule.html">2026시즌 일정/결과</a>
-          <a class="nav-btn" href="./rank.html">2026시즌 순위</a>
-          <a class="nav-btn" href="./board.html">자유게시판</a>
-          <a class="nav-btn" href="./gallery.html">사진첩</a>
-        </nav>
+        <section class="home-menu-panel" aria-label="바로가기">
+          <nav class="home-menu-grid">
+            <a class="nav-btn home-menu-card" href="./schedule.html">
+              <span class="home-menu-card__label">2026시즌 일정/결과</span>
+            </a>
+            <a class="nav-btn home-menu-card" href="./rank.html">
+              <span class="home-menu-card__label">2026시즌 순위</span>
+            </a>
+            <a class="nav-btn home-menu-card" href="./board.html">
+              <span class="home-menu-card__label">자유게시판</span>
+            </a>
+            <a class="nav-btn home-menu-card" href="./gallery.html">
+              <span class="home-menu-card__label">사진첩</span>
+            </a>
+          </nav>
+        </section>
 
-        <div class="bottom-character-wrap">
-          <img
-            class="bottom-character"
-            src="./images/character-left.png"
-            alt=""
-          />
+        <div class="home-mascot-zone">
+          <div class="home-mascot-zone__glow" aria-hidden="true"></div>
+          <div class="bottom-character-wrap">
+            <img
+              class="bottom-character"
+              src="./images/character-left.png"
+              alt=""
+            />
+          </div>
         </div>
       </div>
 
       <footer class="home-footer">
-        <div id="board-auth" class="board-auth-bar board-auth-bar--home" aria-label="계정">
-          <div id="board-auth-guest" class="board-auth-bar__guest">
-            <button type="button" id="board-google-login" class="board-auth-bar__login-btn">
-              Google 로그인
-            </button>
-          </div>
-          <div id="board-auth-user" class="board-auth-bar__user is-hidden">
-            <div class="board-auth-bar__row">
-              <span id="board-auth-welcome" class="board-auth-bar__welcome"></span>
-              <span class="board-auth-bar__sep" aria-hidden="true">·</span>
-              <span class="board-auth-bar__links">
-                <button
-                  type="button"
-                  id="board-nickname-toggle"
-                  class="board-auth-link-btn"
-                  aria-expanded="false"
-                >
-                  닉네임 변경
-                </button>
+        <div class="home-account-panel">
+          <div id="board-auth" class="board-auth-bar board-auth-bar--home" aria-label="계정">
+            <div id="board-auth-guest" class="board-auth-bar__guest">
+              <button type="button" id="board-google-login" class="board-auth-bar__login-btn">
+                Google 로그인
+              </button>
+            </div>
+            <div id="board-auth-user" class="board-auth-bar__user is-hidden">
+              <div class="board-auth-bar__row">
+                <span id="board-auth-welcome" class="board-auth-bar__welcome"></span>
                 <span class="board-auth-bar__sep" aria-hidden="true">·</span>
-                <button type="button" id="board-logout" class="board-auth-link-btn">
-                  로그아웃
+                <span class="board-auth-bar__links">
+                  <button
+                    type="button"
+                    id="board-nickname-toggle"
+                    class="board-auth-link-btn"
+                    aria-expanded="false"
+                  >
+                    닉네임 변경
+                  </button>
+                  <span class="board-auth-bar__sep" aria-hidden="true">·</span>
+                  <button type="button" id="board-logout" class="board-auth-link-btn">
+                    로그아웃
+                  </button>
+                </span>
+              </div>
+            </div>
+            <div id="board-nickname-panel" class="board-auth-bar__panel is-hidden">
+              <form id="board-nickname-form" class="board-nickname-form--inline" novalidate>
+                <input
+                  id="board-nickname-input"
+                  class="board-input board-input--sm"
+                  type="text"
+                  maxlength="20"
+                  placeholder="닉네임"
+                  autocomplete="nickname"
+                />
+                <button type="submit" class="board-auth-bar__mini-btn">저장</button>
+                <button type="button" id="board-nickname-cancel" class="board-auth-link-btn">
+                  취소
                 </button>
-              </span>
+              </form>
+              <p
+                id="board-nickname-status"
+                class="board-auth-status--inline is-hidden"
+                role="status"
+                aria-live="polite"
+              ></p>
             </div>
           </div>
-          <div id="board-nickname-panel" class="board-auth-bar__panel is-hidden">
-            <form id="board-nickname-form" class="board-nickname-form--inline" novalidate>
-              <input
-                id="board-nickname-input"
-                class="board-input board-input--sm"
-                type="text"
-                maxlength="20"
-                placeholder="닉네임"
-                autocomplete="nickname"
-              />
-              <button type="submit" class="board-auth-bar__mini-btn">저장</button>
-              <button type="button" id="board-nickname-cancel" class="board-auth-link-btn">
-                취소
-              </button>
-            </form>
-            <p
-              id="board-nickname-status"
-              class="board-auth-status--inline is-hidden"
-              role="status"
-              aria-live="polite"
-            ></p>
-          </div>
         </div>
-        <div class="site-footer">
+        <div class="site-footer home-footer__legal">
           <p class="site-footer__legal">© 2026 YELLOW DRAGONS. All rights reserved.</p>
           <p class="site-footer__notice">전남드래곤즈를 응원하는 비공식 팬페이지입니다.</p>
         </div>
