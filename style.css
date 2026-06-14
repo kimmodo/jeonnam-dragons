@@ -556,18 +556,32 @@ h2,
   min-height: -webkit-fill-available;
   margin-left: auto;
   margin-right: auto;
+  padding: 12px 16px 10px;
+  box-shadow:
+    0 0 0 1px rgba(17, 17, 17, 0.05),
+    0 12px 40px rgba(0, 0, 0, 0.22);
 }
 
 .site-header--home {
   flex-shrink: 0;
-  margin-bottom: 0;
+  margin-bottom: 2px;
+  padding-top: 4px;
+}
+
+#home-page .site-brand {
+  padding: 4px 6px 12px;
+  font-size: clamp(2.55rem, 11.2vw, 3.75rem);
+  font-weight: 900;
+  letter-spacing: 0.055em;
+  line-height: 0.98;
+  text-shadow: none;
 }
 
 #home-page .home-main {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   width: 100%;
   min-height: 0;
 }
@@ -575,7 +589,7 @@ h2,
 .home-games-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   max-width: 100%;
   align-items: stretch;
@@ -604,23 +618,65 @@ h2,
   text-align: center;
 }
 
+#home-page .home-game-card {
+  padding: 11px 10px 12px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fffdf7 0%, var(--color-panel) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.65) inset,
+    0 2px 10px rgba(17, 17, 17, 0.07);
+}
+
+#home-page .home-game-card--next .home-game-card__label {
+  color: rgba(17, 17, 17, 0.82);
+}
+
+#home-page .home-game-card--past .home-game-card__label {
+  color: rgba(17, 17, 17, 0.72);
+}
+
 .home-game-card__top {
   position: relative;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   min-height: 1.35em;
-  margin-bottom: 3px;
-  padding: 0 1.8em;
+  margin-bottom: 6px;
+  padding: 0 1.8em 5px;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.07);
 }
 
 .home-game-card__label {
   margin: 0;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   opacity: 0.88;
   text-align: center;
+}
+
+#home-page .home-game-card__main {
+  margin: 0 0 6px;
+  font-size: clamp(0.84rem, 4vw, 1.02rem);
+  font-weight: 900;
+  line-height: 1.24;
+  letter-spacing: -0.01em;
+}
+
+#home-page .home-game-card__sub {
+  font-size: clamp(0.6rem, 2.7vw, 0.68rem);
+  line-height: 1.35;
+  opacity: 0.72;
+}
+
+#home-page .home-game-card .result-badge {
+  padding: 2px 7px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.12);
 }
 
 .home-game-card__badge-slot,
@@ -681,7 +737,7 @@ h2,
   z-index: 2;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -694,6 +750,37 @@ h2,
   font-weight: 700;
 }
 
+#home-page .home-menu-grid .nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  padding: 13px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.28;
+  letter-spacing: 0.01em;
+  border-radius: 14px;
+  border: 2px solid var(--color-text);
+  background: var(--color-text);
+  color: var(--color-surface);
+  box-shadow:
+    0 2px 0 rgba(17, 17, 17, 0.92),
+    0 4px 14px rgba(17, 17, 17, 0.14);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+@media (hover: hover) {
+  #home-page .home-menu-grid .nav-btn:hover {
+    background: #1c1c1c;
+  }
+}
+
+#home-page .home-menu-grid .nav-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(17, 17, 17, 0.92);
+}
+
 @media (max-width: 300px) {
   .home-menu-grid {
     grid-template-columns: 1fr;
@@ -701,29 +788,48 @@ h2,
 }
 
 #home-page .bottom-character-wrap {
-  margin-top: 0;
+  margin-top: 2px;
   margin-bottom: 0;
-  padding: 0;
+  padding: 0 0 4px;
 }
 
 #home-page .bottom-character {
-  width: min(200px, 62vw);
-  max-height: 180px;
+  width: min(200px, 58vw);
+  max-height: 175px;
+  filter: drop-shadow(0 6px 14px rgba(17, 17, 17, 0.1));
 }
 
 .home-footer {
   flex-shrink: 0;
   margin-top: auto;
-  padding-top: 6px;
-  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+  padding-top: 10px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
   text-align: center;
 }
 
 .home-credit {
-  margin: 4px 0 0;
-  font-size: 0.72rem;
-  color: rgba(17, 17, 17, 0.5);
-  letter-spacing: 0.02em;
+  margin: 6px 0 0;
+  font-size: 0.68rem;
+  color: rgba(17, 17, 17, 0.45);
+  letter-spacing: 0.04em;
+}
+
+.home-footer .site-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  padding-bottom: 0;
+  border-top: 1px solid rgba(17, 17, 17, 0.08);
+}
+
+.home-footer .site-footer__legal,
+.home-footer .site-footer__notice {
+  font-size: 0.66rem;
+  line-height: 1.55;
+  color: rgba(17, 17, 17, 0.58);
+}
+
+.home-footer .site-footer__legal {
+  margin-bottom: 2px;
 }
 
 .site-footer {
@@ -731,12 +837,6 @@ h2,
   padding-top: var(--space-md);
   padding-bottom: max(var(--space-md), env(safe-area-inset-bottom, 0px));
   text-align: center;
-}
-
-.home-footer .site-footer {
-  margin-top: 10px;
-  padding-top: 8px;
-  padding-bottom: 0;
 }
 
 .site-footer__legal,
@@ -767,9 +867,32 @@ h2,
 #home-page .board-auth-bar--home {
   width: 100%;
   margin: 0;
-  padding: 0;
+  padding: 6px 4px 0;
   justify-content: center;
   text-align: center;
+}
+
+#home-page .board-auth-bar__login-btn {
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+#home-page .board-auth-bar__row {
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  line-height: 1.45;
+}
+
+#home-page .board-auth-bar__welcome {
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+#home-page .board-auth-link-btn {
+  font-size: 0.8rem;
+  padding: 4px 2px;
 }
 
 #home-page .board-auth-bar__guest,
@@ -1659,6 +1782,15 @@ body.gallery-modal-open {
   #home-page {
     min-height: 100dvh;
     min-height: 100svh;
+    padding: 10px 14px 8px;
+  }
+
+  #home-page .site-brand {
+    padding: 2px 4px 10px;
+    font-size: clamp(2.5rem, 11vw, 3.6rem);
+    letter-spacing: 0.05em;
+    line-height: 0.98;
+    text-shadow: none;
   }
 
   .site-header--home {
@@ -1666,29 +1798,30 @@ body.gallery-modal-open {
   }
 
   .home-footer {
-    padding-top: 4px;
-    padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
+    padding-top: 8px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
   }
 
   .home-credit {
-    margin-top: 3px;
+    margin-top: 4px;
   }
 
   #home-page .home-main {
-    gap: 6px;
+    gap: 8px;
   }
 
   #home-page .bottom-character-wrap {
     margin-top: 0;
-    padding-bottom: 0;
+    padding-bottom: 2px;
   }
 
-  .home-game-card {
-    padding: 7px 5px 8px;
+  #home-page .home-game-card {
+    padding: 10px 8px 11px;
   }
 
-  .home-menu-grid .nav-btn {
-    padding: 11px 6px;
+  #home-page .home-menu-grid .nav-btn {
+    min-height: 48px;
+    padding: 12px 8px;
     font-size: 0.76rem;
   }
 
