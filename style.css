@@ -649,14 +649,14 @@ h2,
 .home-match-panel {
   background: rgba(20, 20, 20, 0.92);
   border-radius: 16px;
-  padding: 8px;
+  padding: 10px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
 
 .home-games-row {
   display: grid;
-  grid-template-columns: 1.12fr 0.88fr;
-  gap: 7px;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 8px;
   width: 100%;
   max-width: 100%;
   align-items: stretch;
@@ -691,14 +691,14 @@ h2,
 }
 
 #home-page .home-game-card--next {
-  padding: 0 0 10px;
+  padding: 0 0 11px;
   border: 1px solid rgba(255, 220, 0, 0.35);
   background: linear-gradient(180deg, #fffef9 0%, var(--color-panel) 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 #home-page .home-game-card--past {
-  padding: 0 0 9px;
+  padding: 0 0 10px;
   border: 1px solid rgba(17, 17, 17, 0.1);
   background: linear-gradient(180deg, #f5f0e2 0%, #ebe4d4 100%);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -717,17 +717,17 @@ h2,
 }
 
 #home-page .home-game-card--next .home-game-card__top {
-  margin: 0 0 7px;
-  padding: 6px 10px 5px;
-  border-bottom: 1px solid rgba(255, 220, 0, 0.45);
-  background: #151515;
+  margin: 0 0 8px;
+  padding: 4px 8px 4px;
+  border-bottom: 1px solid rgba(255, 220, 0, 0.32);
+  background: #1c1c1c;
 }
 
 #home-page .home-game-card--past .home-game-card__top {
-  margin: 0 0 6px;
-  padding: 5px 8px 4px;
+  margin: 0 0 7px;
+  padding: 4px 8px 3px;
   border-bottom: 1px solid rgba(17, 17, 17, 0.1);
-  background: rgba(17, 17, 17, 0.06);
+  background: rgba(17, 17, 17, 0.07);
 }
 
 .home-game-card__label {
@@ -741,19 +741,19 @@ h2,
 
 #home-page .home-game-card--next .home-game-card__label {
   color: var(--color-surface);
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  opacity: 1;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  opacity: 0.95;
 }
 
 #home-page .home-game-card--past .home-game-card__label {
   font-size: 0.64rem;
   letter-spacing: 0.12em;
-  opacity: 0.82;
+  opacity: 0.85;
 }
 
 #home-page .home-game-card--next .home-game-card__main {
-  margin: 0 9px 7px;
+  margin: 0 8px 8px;
   font-size: clamp(0.86rem, 4vw, 1.04rem);
   font-weight: 900;
   line-height: 1.22;
@@ -761,22 +761,22 @@ h2,
 }
 
 #home-page .home-game-card--past .home-game-card__main {
-  margin: 0 7px 5px;
-  font-size: clamp(0.72rem, 3.4vw, 0.86rem);
+  margin: 0 8px 6px;
+  font-size: clamp(0.74rem, 3.5vw, 0.88rem);
   font-weight: 800;
   line-height: 1.22;
   opacity: 1;
 }
 
 #home-page .home-game-card--next .home-game-card__sub {
-  margin: 0 9px;
+  margin: 0 8px;
   font-size: clamp(0.62rem, 2.8vw, 0.7rem);
   line-height: 1.35;
   opacity: 0.78;
 }
 
 #home-page .home-game-card--past .home-game-card__sub {
-  margin: 0 7px;
+  margin: 0 8px;
   font-size: clamp(0.58rem, 2.6vw, 0.66rem);
   line-height: 1.32;
   opacity: 0.76;
@@ -941,9 +941,9 @@ h2,
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  min-height: 100px;
-  margin-top: -2px;
-  padding: 0 0 4px;
+  min-height: 88px;
+  margin-top: 2px;
+  padding: 0 0 2px;
 }
 
 .home-mascot-zone__glow {
@@ -974,15 +974,15 @@ h2,
 .home-footer {
   flex-shrink: 0;
   margin-top: auto;
-  padding: 10px 12px max(10px, env(safe-area-inset-bottom, 0px));
+  padding: 6px 12px max(8px, env(safe-area-inset-bottom, 0px));
   text-align: center;
 }
 
 .home-account-panel {
   background: #151515;
   border-radius: 14px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14);
 }
 
@@ -1020,8 +1020,8 @@ h2,
 }
 
 #home-page .board-auth-bar__login-btn {
-  min-height: 38px;
-  padding: 8px 16px;
+  min-height: 36px;
+  padding: 7px 14px;
   border-radius: 10px;
   border: 2px solid var(--color-surface);
   background: transparent;
@@ -2002,12 +2002,17 @@ body.gallery-modal-open {
   }
 
   #home-page .home-main {
-    gap: 12px;
+    gap: 10px;
     padding: 12px 12px 0;
   }
 
   .home-footer {
-    padding: 10px 12px max(8px, env(safe-area-inset-bottom, 0px));
+    padding: 4px 12px max(8px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .home-mascot-zone {
+    min-height: 82px;
+    margin-top: 0;
   }
 
   #home-page .home-game-card--next .home-game-card__main {
